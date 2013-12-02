@@ -6,32 +6,26 @@ TSIZE = 40
 
 local path = "art/loot/"
 
+-- define some basic loot
+local loots = {
+
+{name = "sword", w = 1, h = 3, file = "sword", layout = { {true}, {true}, {true} } },
+{name = "buckler", w = 2, h = 2, file = "buckler", layout = { {true, true}, {true, true} } },
+{name = "mace", w = 2, h = 3, file = "mace", layout = { {true, false}, {true, true}, {false, true} } },
+{name = "axe", w = 2, h = 3, file = "axe", layout = { {true, true}, {true, true}, {true, false} } },
+{name = "armor", w = 2, h = 4, file = "armor", layout = { {true, true}, {true, true}, {true, true}, {true, true} } },
+{name = "bow", w = 2, h = 4, file = "bow", layout = { {true, false}, {true, true}, {true, true}, {true, false} } },
+{name = "gauntlet", w = 2, h = 1, file = "gauntlet", layout = { {true, true} } },
+{name = "helmet", w = 3, h = 2, file = "helmet", layout = { {true, false, true}, {true, true, true} } },
+{name = "staff", w = 1, h = 4, file = "staff", layout = { {true}, {true}, {true}, {true} } },
+
+}
+
 -- generate a sample bit of loop
 local function get_random_loot()
-	local r = math.random(3)
-
-	local w, h, layout
-	if r == 1 then
-		-- a sword! a 1x3 array of tiles
-		w = 1
-		h = 3
-		image = love.graphics.newImage(path .. "sword.png")
-		layout = { {true}, {true}, {true} }
-	elseif r == 2 then
-		-- a buckler!
-		w = 2
-		h = 2
-		image = love.graphics.newImage(path .. "buckler.png")
-		layout = { {true, true}, {true, true} }
-	elseif r == 3 then
-		-- a mace!
-		w = 2
-		h = 3
-		image = love.graphics.newImage(path .. "mace.png")
-		layout = { {true, false}, {true, true}, {false, true} }
-	end
-
-	return w, h, image, layout
+	local l = loots[math.random(table.getn(loots))]
+	local img = love.graphics.newImage(path .. l.file .. ".png")
+	return l.w, l.h, img, l.layout
 end
 
 -- return the layout of this piece
