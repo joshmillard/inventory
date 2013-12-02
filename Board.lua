@@ -2,7 +2,6 @@ module(..., package.seeall);
 
 -- the puzzleboard structure
 
-
 local function set(board, x, y, val)
 	if x < 1 or x > board.width or y < 1 or y > board.height then
 		print("full(" .. x .. "," .. y ..") out of bounds")
