@@ -69,7 +69,23 @@ end
 -- given a piece of loot on the board, check the neighboring spaces to that loot and
 -- compile a list of adjacent (cardinal, not diagonal) pieces of loot on the board
 local function get_adjacent_loot(board, loot)
-	
+	-- TODO: call get_loot_tiles, iterate over that list of coordinates creating a hash of
+  -- pieces found neighboring each to create final list of neighboring loot	
+end
+
+-- given a piece of loot, return the list of tiles that loot occupies on the board
+local function get_loot_tiles(board, loot)
+	local l = loot:layout()
+	local t = {}
+	for y=1, loot:h() do
+		for x=1, loot:w() do
+			if l[y][x] then
+				table.insert(t, {x + loot:tx() - 1, y + loot:ty() - 1})
+			end
+		end
+	end
+
+	return t
 end
 
 local function p(board)
@@ -116,6 +132,8 @@ function new(width, height)
 
 	o.add_loot_to_board = add_loot_to_board
 	o.check_for_overlap = check_for_overlap
+	o.get_adjacent_loot = get_adjacent_loot
+	o.get_loot_tiles = get_loot_tiles
 
 	return o
 end
