@@ -69,8 +69,30 @@ end
 -- given a piece of loot on the board, check the neighboring spaces to that loot and
 -- compile a list of adjacent (cardinal, not diagonal) pieces of loot on the board
 local function get_adjacent_loot(board, loot)
-	-- TODO: call get_loot_tiles, iterate over that list of coordinates creating a hash of
-  -- pieces found neighboring each to create final list of neighboring loot	
+	local t = board:get_loot_tiles(loot)
+	local adjacent = {}
+	local dirs = { {"top", 0, -1}, {"left", -1, 0}, {"bottom", 0, 1}, {"right", 1, 0} }
+		-- directions plus spatial offests dx and dy for that direction from current tile
+		-- would make sense to just make this a bit of global constant stuff or something
+	for i,v in ipairs(t) do
+		for j,w in ipairs(dirs) do
+			local n = board:get_tile(v:tx() + w[2], v:ty() + w[3])	
+			if n then
+				local oc = n:get_occupant()
+				if oc and oc ~= loot then 
+					local id = oc.id
+					adjacent[oc.id] = oc
+				end
+			end
+		end
+	end
+
+	local found = {}
+	for k,v in pairs(adjacent) do
+		table.insert(found, v)
+	end
+
+	return found	
 end
 
 -- given a piece of loot, return the list of tiles that loot occupies on the board
@@ -80,7 +102,10 @@ local function get_loot_tiles(board, loot)
 	for y=1, loot:h() do
 		for x=1, loot:w() do
 			if l[y][x] then
-				table.insert(t, {x + loot:tx() - 1, y + loot:ty() - 1})
+				local temptile = board:get_tile(x + loot:tx() - 1, y + loot:ty() - 1)
+				if temptile then
+					table.insert(t, temptile)
+				end
 			end
 		end
 	end
@@ -88,8 +113,28 @@ local function get_loot_tiles(board, loot)
 	return t
 end
 
+local function get_tile(board, x, y)
+	if x < 1 or x > board.width or y < 1 or y > board.height then
+		-- out of bounds
+		return nil
+	end
+	return board.tiles[y][x]
+end
+
 local function p(board)
 	return board.pieces
+end
+
+local function print_board(board)
+	print("Board is " .. board.width .. "x" .. board.height)
+	for y=1, board.height do
+		local str = ""
+		for x=1, board.width do
+			local tempt = board:get_tile(x, y)
+			str = str .. tempt:tx() .. "," .. tempt:ty() .. "\t"
+		end
+		print(str)
+	end
 end
 
 -- create and return a board
@@ -101,25 +146,10 @@ function new(width, height)
 	o.pieces = {} -- list of pieces currently on the board
 
 	o.tiles = {}
-	local neighbors = {top = true, right = true, bottom = true, left = true}
 	for y=1, height do
-		neighbors.top = true
-		neighbors.bottom = true
-		if y == 1 then
-			neighbors.top = false
-		elseif y == o.height then
-			neighbors.bottom = false
-		end
 		o.tiles[y] = {}
 		for x=1, width do
-			neighbors.left = true
-			neighbors.right = true
-			if x == 1 then
-				neighbors.left = false
-			elseif x == o.width then
-				neighbors.right = false
-			end
-			table.insert(o.tiles[y], Tile.new(x, y, neighbors.top, neighbors.right, neighbors.bottom, neighbors.left))
+			table.insert(o.tiles[y], Tile.new(x, y))
 		end
 	end
 		
@@ -134,6 +164,8 @@ function new(width, height)
 	o.check_for_overlap = check_for_overlap
 	o.get_adjacent_loot = get_adjacent_loot
 	o.get_loot_tiles = get_loot_tiles
+	o.get_tile = get_tile
+	o.print_board = print_board
 
 	return o
 end

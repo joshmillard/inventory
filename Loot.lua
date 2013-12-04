@@ -5,19 +5,28 @@ module(..., package.seeall);
 TSIZE = 40
 
 local path = "art/loot/"
+local id_counter = 1
 
 -- define some basic loot
 local loots = {
 
-{name = "sword", w = 1, h = 3, file = "sword", layout = { {true}, {true}, {true} } },
-{name = "buckler", w = 2, h = 2, file = "buckler", layout = { {true, true}, {true, true} } },
-{name = "mace", w = 2, h = 3, file = "mace", layout = { {true, false}, {true, true}, {false, true} } },
-{name = "axe", w = 2, h = 3, file = "axe", layout = { {true, true}, {true, true}, {true, false} } },
-{name = "armor", w = 2, h = 4, file = "armor", layout = { {true, true}, {true, true}, {true, true}, {true, true} } },
-{name = "bow", w = 2, h = 4, file = "bow", layout = { {true, false}, {true, true}, {true, true}, {true, false} } },
-{name = "gauntlet", w = 2, h = 1, file = "gauntlet", layout = { {true, true} } },
-{name = "helmet", w = 3, h = 2, file = "helmet", layout = { {true, false, true}, {true, true, true} } },
-{name = "staff", w = 1, h = 4, file = "staff", layout = { {true}, {true}, {true}, {true} } },
+{name = "sword", category = "weapon", w = 1, h = 3, file = "sword", layout = { {true}, {true}, {true} } },
+
+{name = "buckler", category = "armor", w = 2, h = 2, file = "buckler", layout = { {true, true}, {true, true} } },
+
+{name = "mace", category = "weapon", w = 2, h = 3, file = "mace", layout = { {true, false}, {true, true}, {false, true} } },
+
+{name = "axe", category = "weapon", w = 2, h = 3, file = "axe", layout = { {true, true}, {true, true}, {true, false} } },
+
+{name = "armor", category = "armor", w = 2, h = 4, file = "armor", layout = { {true, true}, {true, true}, {true, true}, {true, true} } },
+
+{name = "bow", category = "weapon", w = 2, h = 4, file = "bow", layout = { {true, false}, {true, true}, {true, true}, {true, false} } },
+
+{name = "gauntlet", category = "armor", w = 2, h = 1, file = "gauntlet", layout = { {true, true} } },
+
+{name = "helmet", category = "armor", w = 3, h = 2, file = "helmet", layout = { {true, false, true}, {true, true, true} } },
+
+{name = "staff", category = "weapon", w = 1, h = 4, file = "staff", layout = { {true}, {true}, {true}, {true} } },
 
 }
 
@@ -25,7 +34,7 @@ local loots = {
 local function get_random_loot()
 	local l = loots[math.random(table.getn(loots))]
 	local img = love.graphics.newImage(path .. l.file .. ".png")
-	return l.w, l.h, img, l.layout
+	return l.name, l.category, l.w, l.h, img, l.layout
 end
 
 -- return the layout of this piece
@@ -95,11 +104,18 @@ local function image_offset(loot)
 	return {x = xoff * TSIZE, y = yoff * TSIZE}
 end
 
+-- return the global id counter value and increment it, so no two loots have the same id
+local function get_unique_loot_id()
+	id_counter = id_counter + 1
+	return id_counter
+end
+
 -- generate a new piece of loot
 function new()
 
 	local o = {}
-	o.width, o.height, o.loot_image, o.tile_layout = get_random_loot()
+	o.id = get_unique_loot_id()
+	o.name, o.category, o.width, o.height, o.loot_image, o.tile_layout = get_random_loot()
 	o.rotation = 0	
 	o.tilex = 1 -- x and y coordinates of origin in board space
 	o.tiley = 1

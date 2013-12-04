@@ -41,7 +41,7 @@ function love.draw()
 
 	draw_board()
 	draw_curr_piece()
-
+	draw_curr_piece_stats()
 end
 
 
@@ -59,6 +59,9 @@ function love.keypressed(key)
 
 	elseif key == " " then
 		drop_curr_piece()
+
+	elseif key == "p" then
+		b:print_board()
 
 	end
 
@@ -117,10 +120,7 @@ function drop_curr_piece()
 	if not b:check_for_overlap(curr_p) then
 		-- no overlap with current board loot, we can drop here!
 		b:add_loot_to_board(curr_p)
-for i,v in ipairs(b:get_loot_tiles(curr_p)) do
-	print(v[1] .. "," .. v[2])
-end
---TODO: b:check_for_matches()
+		check_for_matches(curr_p)
 		get_new_curr_piece()
 	else
 		-- can't drop here, maybe play a nice error noise!
@@ -128,8 +128,23 @@ end
 end
 
 -- check to see if there are any three-piece matches as a result of newly-placed piece
-function check_for_matches()
+function check_for_matches(piece)
+	local graph = {} -- hash of pieces that match this piece
+	graph[piece.id] = piece -- this piece is clearly in the list of pieces of this type touching it...
 
+	local adjacent = b:get_adjacent_loot(piece)
+	print("This piece touches " .. table.getn(adjacent) .. " adjacent piece(s)")
+	for i,v in ipairs(adjacent) do
+		if v.name == piece.name then
+			print("Neighbor " .. v.id .. " is also a " .. v.name .. "!")	
+			graph[v.id] = v
+		end
+	end
+
+
+-- TODO: next, take the list of adjacent pieces and check for actual match of type/kind,
+--  and for any new matches repeat the process outward from *its* neighbors until we stop
+--  finding new ones, so that we have a complete connected chain of like kinds.
 end
 
 
@@ -189,9 +204,23 @@ function draw_piece(draw_p, highlight)
 	-- draw the graphics
 	love.graphics.setColor(fgcolor)
 	love.graphics.draw(draw_p:image(), BX + TSIZE*(draw_p:tx() - 1), BY + TSIZE*(draw_p:ty() - 1), math.rad(draw_p:angle()), 1, 1, draw_p:image_offset().x, draw_p:image_offset().y )
+
+	-- draw a reference ID for debugging
+	love.graphics.setColor(255,0,0)
+	love.graphics.print(draw_p.id, BX + TSIZE*(draw_p:tx() - 1) + 5, BY + TSIZE*(draw_p:ty() - 1) + 5)
+
 end
 
 function draw_curr_piece()
 	draw_piece(curr_p, true)
+end
+
+function draw_curr_piece_stats()
+	love.graphics.setColor(0,255,0,255)
+	love.graphics.print("Name:   " .. curr_p.name, 5, 350)
+	love.graphics.print("Type:   " .. curr_p.category, 5, 365)
+	love.graphics.print("ID:     " .. curr_p.id, 5, 380)
+	love.graphics.print("origin: " .. curr_p:tx() .. "," .. curr_p:ty(), 5, 395)
+	love.graphics.print("w,h:    " .. curr_p:w() .. "," .. curr_p:h(), 5, 410)
 end
 
