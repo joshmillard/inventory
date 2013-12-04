@@ -32,7 +32,8 @@ end
 -- add a piece to the board
 local function add_loot_to_board(board, loot)
   -- add this piece to the list
-  table.insert(board.pieces, loot)
+--  table.insert(board.pieces, loot)
+	board.pieces[loot.id] = loot
   -- mark the board tiles as occupied
   local l = loot:layout()
   for y=1, loot:h() do
@@ -42,6 +43,22 @@ local function add_loot_to_board(board, loot)
       end
     end
   end
+end
+
+-- remove a piece of loot from the board
+local function remove_loot_from_board(board, loot)
+	-- yank piece out of list
+--	table.remove(board.pieces, loot)
+	board.pieces[loot.id] = nil
+	-- free up those board tiles
+	local l = loot:layout()
+	for y=1, loot:h() do
+		for x=1, loot:w() do
+			if l[y][x] then
+				board:set(x + loot:tx() - 1, y + loot:ty() - 1, nil)
+			end
+		end
+	end
 end
 
 -- check to see if a given piece overlaps with the current board state's fixed loot
@@ -143,7 +160,7 @@ function new(width, height)
 	o.width = width   -- dimensions in tiles
 	o.height = height
 
-	o.pieces = {} -- list of pieces currently on the board
+	o.pieces = {} -- hash of pieces currently on the board key: loot.id, val: loot object
 
 	o.tiles = {}
 	for y=1, height do
@@ -161,6 +178,7 @@ function new(width, height)
 	o.p = p
 
 	o.add_loot_to_board = add_loot_to_board
+	o.remove_loot_from_board = remove_loot_from_board
 	o.check_for_overlap = check_for_overlap
 	o.get_adjacent_loot = get_adjacent_loot
 	o.get_loot_tiles = get_loot_tiles

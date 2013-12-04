@@ -131,20 +131,44 @@ end
 function check_for_matches(piece)
 	local graph = {} -- hash of pieces that match this piece
 	graph[piece.id] = piece -- this piece is clearly in the list of pieces of this type touching it...
+	local todo = {}
+	todo[piece.id] = piece
+	local nothing_new = false
 
-	local adjacent = b:get_adjacent_loot(piece)
-	print("This piece touches " .. table.getn(adjacent) .. " adjacent piece(s)")
-	for i,v in ipairs(adjacent) do
-		if v.name == piece.name then
-			print("Neighbor " .. v.id .. " is also a " .. v.name .. "!")	
-			graph[v.id] = v
+	repeat
+		nothing_new = true
+		for j,w in pairs(todo) do		
+			local adjacent = b:get_adjacent_loot(w)
+			for i,v in ipairs(adjacent) do
+				if v.name == w.name then
+					if not graph[v.id] then
+						graph[v.id] = v
+						todo[v.id] = v
+						nothing_new = false
+					end
+				end
+			end
+			todo[w.id] = nil
 		end
+	until nothing_new
+
+	-- debug: list all the pieces in this matching graph
+	local num_matches = 0
+	for k,v in pairs(graph) do
+		print(v.name .. " #" .. v.id)
+		num_matches = num_matches + 1
 	end
+	print("\n")
 
+	-- TODO: now actually do something about getting rid of these matched items if 3+
+	if num_matches >= 3 then
+		print("Matching " .. num_matches .. " connected " .. piece.name .. " pieces!")
+		for k,v in pairs(graph) do
+			b:remove_loot_from_board(v)
+			print("Removing " .. v.name .. " #" .. v.id)
+		end
+	end	
 
--- TODO: next, take the list of adjacent pieces and check for actual match of type/kind,
---  and for any new matches repeat the process outward from *its* neighbors until we stop
---  finding new ones, so that we have a complete connected chain of like kinds.
 end
 
 
@@ -173,7 +197,7 @@ function draw_board()
 		end
 	end
 
-	for i,v in ipairs(b:p()) do
+	for k,v in pairs(b:p()) do
 		draw_piece(v)
 	end
 
