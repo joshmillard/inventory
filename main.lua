@@ -16,6 +16,7 @@ require "Loot"
 b = nil 	-- the board
 curr_p = nil -- our current piece in play
 
+score = 0 -- silly placeholder matching metric
 
 function love.load()
 
@@ -42,6 +43,7 @@ function love.draw()
 	draw_board()
 	draw_curr_piece()
 	draw_curr_piece_stats()
+	draw_score()
 end
 
 
@@ -140,7 +142,7 @@ function check_for_matches(piece)
 		for j,w in pairs(todo) do		
 			local adjacent = b:get_adjacent_loot(w)
 			for i,v in ipairs(adjacent) do
-				if v.name == w.name then
+				if v.subkind == w.subkind then
 					if not graph[v.id] then
 						graph[v.id] = v
 						todo[v.id] = v
@@ -155,17 +157,15 @@ function check_for_matches(piece)
 	-- debug: list all the pieces in this matching graph
 	local num_matches = 0
 	for k,v in pairs(graph) do
-		print(v.name .. " #" .. v.id)
 		num_matches = num_matches + 1
 	end
-	print("\n")
 
-	-- TODO: now actually do something about getting rid of these matched items if 3+
 	if num_matches >= 3 then
-		print("Matching " .. num_matches .. " connected " .. piece.name .. " pieces!")
+		print("Matching " .. num_matches .. " connected " .. piece.subkind .. " pieces!")
 		for k,v in pairs(graph) do
 			b:remove_loot_from_board(v)
-			print("Removing " .. v.name .. " #" .. v.id)
+			print("Removing " .. v.subkind .. " #" .. v.id)
+			score = score + 1
 		end
 	end	
 
@@ -242,9 +242,15 @@ end
 function draw_curr_piece_stats()
 	love.graphics.setColor(0,255,0,255)
 	love.graphics.print("Name:   " .. curr_p.name, 5, 350)
-	love.graphics.print("Type:   " .. curr_p.category, 5, 365)
+	love.graphics.print("Type:   " .. curr_p.subkind, 5, 365)
 	love.graphics.print("ID:     " .. curr_p.id, 5, 380)
 	love.graphics.print("origin: " .. curr_p:tx() .. "," .. curr_p:ty(), 5, 395)
 	love.graphics.print("w,h:    " .. curr_p:w() .. "," .. curr_p:h(), 5, 410)
 end
 
+function draw_score()
+	love.graphics.setColor(255,255,255)
+	love.graphics.print("Score: ", 540, 10)
+	love.graphics.setColor(0,255,0)
+	love.graphics.print(score, 590, 10)
+end
