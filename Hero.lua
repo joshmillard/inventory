@@ -61,6 +61,22 @@ function get_random_hero()
 
 end
 
+-- total up hero's base stats and equipment stats to produce current total stats
+local function recalculate_hero_stats(hero)
+	local attack = hero.attack
+	local defense = hero.defense
+	for k,v in pairs(hero.equipment) do
+		if v.attack then
+			attack = attack + v.attack
+		end
+		if v.defense then
+			defense = defense + v.defense
+		end
+	end
+	hero.curr_attack = attack
+	hero.curr_defense = defense
+end
+
 -- passed a given piece of loot, put it on the hero, possibly ditching previous gear
 local function put_gear_on_hero(hero, loot)
 	if not loot then
@@ -83,6 +99,7 @@ local function put_gear_on_hero(hero, loot)
 	loot:orient_for_homunculus()
 	
 -- TODO: now would be a good time to recalculate hero's aggregate stats based on equipment change
+	hero:recalculate_hero_stats()
 end
 	
 
@@ -92,6 +109,8 @@ function new()
 
 	o.name, o.class, o.attack, o.defense, o.max_hp = get_random_hero()
 	o.hp = o.max_hp
+	o.curr_attack = o.attack
+	o.curr_defense = o.defense
 
 	o.equipment = {
 		head = nil,
@@ -113,6 +132,7 @@ function new()
 	
 	-- methods
 	o.put_gear_on_hero = put_gear_on_hero
+	o.recalculate_hero_stats = recalculate_hero_stats
 
 	return o
 end

@@ -2,11 +2,17 @@ module(..., package.seeall);
 
 -- inventory tetris sketch
 
+SCREENWIDTH = 1024
+SCREENHEIGHT = 750
 
 -- some board drawing constants
 BX = 500
 BY = 200
 TSIZE = 40
+
+-- homunculus origin
+HOMX = 10
+HOMY = 120
 
 -- includes
 require "Board"
@@ -25,7 +31,7 @@ mouse_ty = 0
 
 function love.load()
 
-	love.graphics.setMode(1024, 750, false, true, 0)
+	love.graphics.setMode(SCREENWIDTH, SCREENHEIGHT, false, true, 0)
 	love.graphics.setCaption("Inventory Tetris")
 
 	b = Board.new(12,8)
@@ -311,44 +317,61 @@ function draw_curr_piece()
 end
 
 function draw_curr_piece_stats()
-	local xpos, ypos = love.mouse.getPosition()
+--	local x, y = love.mouse.getPosition()
+	local CURRSTATSX = 800
+	local CURRSTATSY = 30
+
+	love.graphics.setColor(255,255,255,255)
+	love.graphics.printf("Current piece:", 800, 10, 200, "center") 
+	draw_piece_stats(curr_p, CURRSTATSX, CURRSTATSY)
+end
+
+function draw_piece_stats(loot, x, y)
+	local draw_p = loot
+	local xpos, ypos = x, y
+	if xpos < 0 then
+		xpos = 0
+	end
+	if xpos > SCREENWIDTH then
+		xpos = SCREENWIDTH - 200
+	end
 	xpos = xpos + 5
 	ypos = ypos + 5	
 
-	love.graphics.setColor(0,0,0,200)
+	love.graphics.setColor(0,0,0,100)
 	love.graphics.rectangle("fill", xpos, ypos, 200, 100)
 
 	ypos = ypos + 10
 
 	love.graphics.setColor(0,255,0,255)
-	love.graphics.printf(curr_p.name, xpos, ypos, 200, "center")
+	love.graphics.printf(draw_p.name, xpos, ypos, 200, "center")
 	ypos = ypos + 20
 	
 	if curr_p.attack > 0 then
 		love.graphics.setColor(100,200,100)
-		love.graphics.printf("Attack +" .. curr_p.attack, xpos, ypos, 200, "center")
+		love.graphics.printf("Attack +" .. draw_p.attack, xpos, ypos, 200, "center")
 		ypos = ypos + 15
 	elseif curr_p.attack < 0 then
 		love.graphics.setColor(200,50,50)
-		love.graphics.printf("Attack " .. curr_p.attack, xpos, ypos, 200, "center")
+		love.graphics.printf("Attack " .. draw_p.attack, xpos, ypos, 200, "center")
 		ypos = ypos + 15
 	end
 
 	if curr_p.defense > 0 then
 		love.graphics.setColor(100,200,100)
-		love.graphics.printf("Defense +" .. curr_p.defense, xpos, ypos, 200, "center")
+		love.graphics.printf("Defense +" .. draw_p.defense, xpos, ypos, 200, "center")
 		ypos = ypos + 15
 	elseif curr_p.defense < 0 then
 		love.graphics.setColor(200,50,50)
-		love.graphics.printf("Defense " .. curr_p.defense, xpos, ypos, 200, "center")
+		love.graphics.printf("Defense " .. draw_p.defense, xpos, ypos, 200, "center")
 		ypos = ypos + 15
 	end
 
-	love.graphics.printf("Rank:   " .. curr_p.rank, xpos, ypos, 200, "center")
+	love.graphics.printf("Rank:   " .. draw_p.rank, xpos, ypos, 200, "center")
 end
 
 -- returns a reference to a piece of loot under the mouse pointer, or nil if none
-function get_piece_under_mouse()
+function get_board_piece_under_mouse()
 	local thex, they = mouse_tile_position()
 	if thex then
 		-- mouse is on the board, let's find out what's under it
@@ -363,26 +386,35 @@ function get_piece_under_mouse()
 	return nil
 end
 
+-- returns a reference to a piece of loot on the homunculus uner the mouse pointer, or nil if none
+function get_gear_piece_under_mouse()
+	local thex, they = love.mouse.getPosition()
+	for k,v in pairs(hero.hom.loot) do
+		-- see if we're within the confines of a given homunulus loot zone
+		if thex > HOMX + v.x and thex < HOMX + v.x + v.width 
+				and they > HOMY + v.y and they < HOMY + v.y + v.height then
+			-- we're over this slot!
+			if hero.equipment[k] then
+				-- and there's actual loot, let's return it
+				return hero.equipment[k]
+			end
+		end
+	end 
+	return nil
+end
+
 function draw_hover_piece_stats()
-	local xpos, ypos = love.mouse.getPosition()
-	
-	local draw_p = get_piece_under_mouse()
-
+	local x, y = love.mouse.getPosition()
+	local draw_p = get_board_piece_under_mouse()
 	if not draw_p then
-		-- we don't have a piece, can't very well do this
-		return
+		-- okay, let's see if we're hovering over a homunculus gear piece instead!
+		draw_p = get_gear_piece_under_mouse()
+		if not draw_p then
+			-- no piece there either, eff this
+			return
+		end
 	end
-
-	xpos = xpos - 200
-	love.graphics.setColor(0,0,0,200)
-	love.graphics.rectangle("fill", xpos, ypos, 200, 100)
-
-	love.graphics.setColor(255,0,255,255)
-	love.graphics.print("Name:   " .. draw_p.name, xpos + 5, ypos + 5)
-	love.graphics.print("Type:   " .. draw_p.subkind, xpos + 5, ypos + 20)
-	love.graphics.print("ID:     " .. draw_p.id, xpos + 5, ypos + 35)
-	love.graphics.print("At/Df:  " .. draw_p.attack .. "/" .. curr_p.defense, xpos + 5, ypos + 50)
-	love.graphics.print("Rank:   " .. draw_p.rank, xpos + 5, ypos + 65)
+	draw_piece_stats(draw_p, x - 100, y)
 end
 
 function draw_hero_stats()
@@ -406,38 +438,26 @@ function draw_hero_stats()
 	love.graphics.setColor(200,200,200)
 	love.graphics.printf("HP: " .. hero.hp .. "/" .. hero.max_hp, wl, ypos, wr, al)
 	ypos = ypos + 15
-	love.graphics.printf("Attack: " .. hero.attack, wl, ypos, wr, al)
+	love.graphics.printf("Attack: " .. hero.curr_attack, wl, ypos, wr, al)
 	ypos = ypos + 15
-	love.graphics.printf("Defense: " .. hero.defense, wl, ypos, wr, al)
+	love.graphics.printf("Defense: " .. hero.curr_defense, wl, ypos, wr, al)
 	ypos = ypos + 15
 
-end
-
-function draw_mouse_position()
-	love.graphics.setColor(0,0,255,100)
-	love.graphics.rectangle("fill", BX + TSIZE*(mouse_tx - 1), BY + TSIZE*(mouse_ty - 1), TSIZE, TSIZE)
-
-	love.graphics.setColor(0,0,255,255)
-	local mx, my = love.mouse.getPosition()
-	love.graphics.print("Mouse x,y: " .. mx .. "," .. my, 100, 10)
-	love.graphics.print("Mouse tx, ty: " .. mouse_tx .. "," .. mouse_ty, 100, 25)
 end
 
 function draw_hero_homunculus()
-	local homx = 10
-	local homy = 120
 
 	love.graphics.setColor(255,255,255,255)
-	love.graphics.draw(hero.hom.image, homx, homy)
+	love.graphics.draw(hero.hom.image, HOMX, HOMY)
 
 	-- draw equipped loot, if any, for each slot
 	for k,v in pairs(hero.hom.loot) do
 		love.graphics.setColor(0,0,0)
-		love.graphics.printf(k, homx + v.x, homy + v.y + (v.height / 2) - 10, v.width, "center")
+		love.graphics.printf(k, HOMX + v.x, HOMY + v.y + (v.height / 2) - 10, v.width, "center")
 		if hero.equipment[k] then
 			local l = hero.equipment[k]
-			local xoff = homx + v.x + ((v.width - (l:w() * TSIZE)) / 2)
-			local yoff = homy + v.y + ((v.height - (l:h() * TSIZE)) / 2)
+			local xoff = HOMX + v.x + ((v.width - (l:w() * TSIZE)) / 2)
+			local yoff = HOMY + v.y + ((v.height - (l:h() * TSIZE)) / 2)
 
 			love.graphics.setColor(255,255,255,255)
 			love.graphics.draw(l:image(), xoff, yoff, math.rad(l:angle()), 1, 1, l:image_offset().x, l:image_offset().y )
