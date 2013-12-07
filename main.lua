@@ -11,10 +11,12 @@ TSIZE = 40
 -- includes
 require "Board"
 require "Loot"
+require "Hero"
 
 -- global structures
 b = nil 	-- the board
 curr_p = nil -- our current piece in play
+hero = nil
 
 score = 0 -- silly placeholder matching metric
 
@@ -29,6 +31,8 @@ function love.load()
 	b = Board.new(12,8)
 	get_new_curr_piece()
 
+	hero = Hero.new()
+	print(hero.name .. " the " .. hero.class .. " has " .. hero.hp .. " of max " .. hero.max_hp .. " hitpoints, with " .. hero.attack .. " attack and " .. hero.defense .. " defense.")
 end
 
 -- event loop
