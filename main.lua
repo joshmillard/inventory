@@ -4,8 +4,8 @@ module(..., package.seeall);
 
 
 -- some board drawing constants
-BX = 100
-BY = 75
+BX = 500
+BY = 200
 TSIZE = 40
 
 -- includes
@@ -25,7 +25,7 @@ mouse_ty = 0
 
 function love.load()
 
-	love.graphics.setMode(640, 480, false, true, 0)
+	love.graphics.setMode(1024, 750, false, true, 0)
 	love.graphics.setCaption("Inventory Tetris")
 
 	b = Board.new(12,8)
@@ -49,12 +49,12 @@ function love.draw()
 	love.graphics.setColor(255,255,255)
 	love.graphics.print("hey there", 10,10)
 
+	draw_hero_stats()
+	draw_hero_homunculus()
 	draw_board()
 	draw_curr_piece()
 	draw_curr_piece_stats()
 	draw_hover_piece_stats()
-	draw_score()
-	--draw_mouse_position()
 end
 
 
@@ -382,12 +382,32 @@ function draw_hover_piece_stats()
 	love.graphics.print("Rank:   " .. draw_p.rank, xpos + 5, ypos + 65)
 end
 
+function draw_hero_stats()
+	local STATSX = 10
+	local STATSY = 10
+	local STATSW = 200
+	local STATSH = 100
 
-function draw_score()
-	love.graphics.setColor(255,255,255)
-	love.graphics.print("Score: ", 540, 10)
-	love.graphics.setColor(0,255,0)
-	love.graphics.print(score, 590, 10)
+	local wl = STATSX + 10 -- text padding limit
+	local wr = STATSW - 20 -- padding bound
+	local ypos = STATSY + 10
+	local al = "center"
+
+	love.graphics.setColor(50,50,50)
+	love.graphics.rectangle("fill", STATSX, STATSY, STATSW, STATSH)
+	
+	love.graphics.setColor(255,255,200)
+	love.graphics.printf(hero.name .. " the " .. hero.class, wl, ypos, wr, al)
+	ypos = ypos + 20
+
+	love.graphics.setColor(200,200,200)
+	love.graphics.printf("HP: " .. hero.hp .. "/" .. hero.max_hp, wl, ypos, wr, al)
+	ypos = ypos + 15
+	love.graphics.printf("Attack: " .. hero.attack, wl, ypos, wr, al)
+	ypos = ypos + 15
+	love.graphics.printf("Defense: " .. hero.defense, wl, ypos, wr, al)
+	ypos = ypos + 15
+
 end
 
 function draw_mouse_position()
@@ -398,4 +418,17 @@ function draw_mouse_position()
 	local mx, my = love.mouse.getPosition()
 	love.graphics.print("Mouse x,y: " .. mx .. "," .. my, 100, 10)
 	love.graphics.print("Mouse tx, ty: " .. mouse_tx .. "," .. mouse_ty, 100, 25)
+end
+
+function draw_hero_homunculus()
+	local homx = 10
+	local homy = 120
+
+	love.graphics.setColor(255,255,255,255)
+	love.graphics.draw(hero.hom.image, homx, homy)
+
+	for k,v in pairs(hero.hom.loot) do
+		love.graphics.setColor(0,0,0)
+		love.graphics.printf(k, homx + v.x, homy + v.y + (v.height / 2) - 10, v.width, "center")
+	end
 end

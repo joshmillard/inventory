@@ -16,6 +16,33 @@ local names = {
 	rogue = {"Mal", "Gareth", "Snitch", "Worm", "Knifey", "Wiley", "Tiptoes"},
 }
 
+-- definitions for the gear homunculus slots: name = {xoffset, yoffset, width, height}
+local hom_loot_defs = {
+	head = {x=80, y=20, width=120, height=80},
+	body = {x=100, y=120, width=80, height=160},
+	hands = {x=40, y=160, width=40, height=80},
+	feet = {x=100, y=300, width=80, height=80},
+	item = {x=200, y=260, width=40, height=40},
+	lefthand = {x=260, y=60, width=80, height=120},
+	righthand = {x=260, y=200, width=80, height=120},
+}
+
+-- set up the homunculus graphics and spatial defs
+function init_homunculus()
+	local himage = love.graphics.newImage("art/homunculus/homunculus.png")
+	local hloot = {}
+	for k,v in pairs(hom_loot_defs) do
+		hloot[k] = {}
+		hloot[k].x = v.x
+		hloot[k].y = v.y
+		hloot[k].width = v.width
+		hloot[k].height = v.height
+	end
+
+	return himage, hloot
+end
+
+
 -- generate a random hero
 function get_random_hero()
 	local attack = 1
@@ -50,6 +77,12 @@ function new()
 		righthand = nil,
 		item = nil, 
 	} -- a hash of loot: head, body, hand, foot armor and a couple weapon slots
+
+	-- the background image and spatial definitions for the gear homunculus
+	o.hom = {}
+	o.hom.image = {}
+	o.hom.loot = {}
+	o.hom.image, o.hom.loot = init_homunculus()
 
 	o.images = {} -- hash of sprite collections for displaying hero avatar
 	
