@@ -18,6 +18,9 @@ curr_p = nil -- our current piece in play
 
 score = 0 -- silly placeholder matching metric
 
+mouse_tx = 0
+mouse_ty = 0
+
 function love.load()
 
 	love.graphics.setMode(640, 480, false, true, 0)
@@ -30,7 +33,9 @@ end
 
 -- event loop
 function love.update(dt)
-
+	-- check on some mouse position stuff
+	update_mouse_board_position()
+		
 
 end
 
@@ -43,7 +48,9 @@ function love.draw()
 	draw_board()
 	draw_curr_piece()
 	draw_curr_piece_stats()
+	draw_hover_piece_stats()
 	draw_score()
+	--draw_mouse_position()
 end
 
 
@@ -67,6 +74,44 @@ function love.keypressed(key)
 
 	end
 
+end
+
+-- handle mousebutton events
+
+function love.mousepressed(x, y, button)
+	if button == "r" then
+		rotate_curr_piece()
+	elseif button == "l" then
+		drop_curr_piece()
+	end
+end
+
+-- check to see if the mouse is over the board, and if so update its tx/ty values
+function update_mouse_board_position()
+	local mx, my = love.mouse.getPosition()
+	if mx > BX and mx < BX + b:w()*TSIZE and my > BY and my < BY + b:h()*TSIZE then
+		-- we're in bounds on the board, let's get this shit going!
+		mouse_tx = math.floor( ((mx - BX - (0.5 * curr_p:w()*TSIZE)) + (0.5*TSIZE)) / TSIZE ) + 1
+		mouse_ty = math.floor( ((my - BY - (0.5 * curr_p:h()*TSIZE)) + (0.5*TSIZE)) / TSIZE ) + 1
+		curr_p:set_position(mouse_tx, mouse_ty)
+		force_curr_piece_inbounds()
+	else
+		-- out of bounds don't care, so sad
+	end
+end
+
+-- returns tx, ty coordinate of tile mouse is over if it's over board, nil otherise
+function mouse_tile_position()
+	local mx, my = love.mouse.getPosition()
+	if mx > BX and mx < BX + b:w()*TSIZE and my > BY and my < BY + b:h()*TSIZE then
+		-- mouse cursor is in the confines of the board, let's return a tile coordinate pair
+		local newtx = math.floor( ((mx - BX) / TSIZE) + 1)
+		local newty = math.floor( ((my - BY) / TSIZE) + 1)
+		return newtx, newty
+	end
+	
+	-- out of bounds
+	return nil
 end
 
 -- move current piece on board
@@ -259,18 +304,94 @@ function draw_curr_piece()
 end
 
 function draw_curr_piece_stats()
-	love.graphics.setColor(0,255,0,255)
-	love.graphics.print("Name:   " .. curr_p.name, 5, 350)
-	love.graphics.print("Type:   " .. curr_p.subkind, 5, 365)
-	love.graphics.print("ID:     " .. curr_p.id, 5, 380)
-	love.graphics.print("At/Df:  " .. curr_p.attack .. "/" .. curr_p.defense, 5, 395)
-	love.graphics.print("Rank:   " .. curr_p.rank, 5, 410)
+	local xpos, ypos = love.mouse.getPosition()
+	xpos = xpos + 5
+	ypos = ypos + 5	
 
+	love.graphics.setColor(0,0,0,200)
+	love.graphics.rectangle("fill", xpos, ypos, 200, 100)
+
+	ypos = ypos + 10
+
+	love.graphics.setColor(0,255,0,255)
+	love.graphics.printf(curr_p.name, xpos, ypos, 200, "center")
+	ypos = ypos + 20
+	
+	if curr_p.attack > 0 then
+		love.graphics.setColor(100,200,100)
+		love.graphics.printf("Attack +" .. curr_p.attack, xpos, ypos, 200, "center")
+		ypos = ypos + 15
+	elseif curr_p.attack < 0 then
+		love.graphics.setColor(200,50,50)
+		love.graphics.printf("Attack " .. curr_p.attack, xpos, ypos, 200, "center")
+		ypos = ypos + 15
+	end
+
+	if curr_p.defense > 0 then
+		love.graphics.setColor(100,200,100)
+		love.graphics.printf("Defense +" .. curr_p.defense, xpos, ypos, 200, "center")
+		ypos = ypos + 15
+	elseif curr_p.defense < 0 then
+		love.graphics.setColor(200,50,50)
+		love.graphics.printf("Defense " .. curr_p.defense, xpos, ypos, 200, "center")
+		ypos = ypos + 15
+	end
+
+	love.graphics.printf("Rank:   " .. curr_p.rank, xpos, ypos, 200, "center")
 end
+
+-- returns a reference to a piece of loot under the mouse pointer, or nil if none
+function get_piece_under_mouse()
+	local thex, they = mouse_tile_position()
+	if thex then
+		-- mouse is on the board, let's find out what's under it
+		local loot = b:full(thex, they)
+		if loot then
+			-- there's a piece, let's return that sucker
+			return loot
+		end
+	end
+
+	-- either the mouse wasn't over the board, or there was no piece under it's board position
+	return nil
+end
+
+function draw_hover_piece_stats()
+	local xpos, ypos = love.mouse.getPosition()
+	
+	local draw_p = get_piece_under_mouse()
+
+	if not draw_p then
+		-- we don't have a piece, can't very well do this
+		return
+	end
+
+	xpos = xpos - 200
+	love.graphics.setColor(0,0,0,200)
+	love.graphics.rectangle("fill", xpos, ypos, 200, 100)
+
+	love.graphics.setColor(255,0,255,255)
+	love.graphics.print("Name:   " .. draw_p.name, xpos + 5, ypos + 5)
+	love.graphics.print("Type:   " .. draw_p.subkind, xpos + 5, ypos + 20)
+	love.graphics.print("ID:     " .. draw_p.id, xpos + 5, ypos + 35)
+	love.graphics.print("At/Df:  " .. draw_p.attack .. "/" .. curr_p.defense, xpos + 5, ypos + 50)
+	love.graphics.print("Rank:   " .. draw_p.rank, xpos + 5, ypos + 65)
+end
+
 
 function draw_score()
 	love.graphics.setColor(255,255,255)
 	love.graphics.print("Score: ", 540, 10)
 	love.graphics.setColor(0,255,0)
 	love.graphics.print(score, 590, 10)
+end
+
+function draw_mouse_position()
+	love.graphics.setColor(0,0,255,100)
+	love.graphics.rectangle("fill", BX + TSIZE*(mouse_tx - 1), BY + TSIZE*(mouse_ty - 1), TSIZE, TSIZE)
+
+	love.graphics.setColor(0,0,255,255)
+	local mx, my = love.mouse.getPosition()
+	love.graphics.print("Mouse x,y: " .. mx .. "," .. my, 100, 10)
+	love.graphics.print("Mouse tx, ty: " .. mouse_tx .. "," .. mouse_ty, 100, 25)
 end
