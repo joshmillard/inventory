@@ -244,8 +244,11 @@ function draw_curr_piece_stats()
 	love.graphics.print("Name:   " .. curr_p.name, 5, 350)
 	love.graphics.print("Type:   " .. curr_p.subkind, 5, 365)
 	love.graphics.print("ID:     " .. curr_p.id, 5, 380)
-	love.graphics.print("origin: " .. curr_p:tx() .. "," .. curr_p:ty(), 5, 395)
-	love.graphics.print("w,h:    " .. curr_p:w() .. "," .. curr_p:h(), 5, 410)
+	love.graphics.print("At/Df:  " .. curr_p.attack .. "/" .. curr_p.defense, 5, 395)
+	love.graphics.print("Rank:   " .. curr_p.rank, 5, 410)
+--	love.graphics.print("origin: " .. curr_p:tx() .. "," .. curr_p:ty(), 5, 395)
+--	love.graphics.print("w,h:    " .. curr_p:w() .. "," .. curr_p:h(), 5, 410)
+
 end
 
 function draw_score()

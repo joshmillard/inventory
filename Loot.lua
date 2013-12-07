@@ -18,7 +18,7 @@ local loots = {
 
 {name = "axe", category = "weapon", kind="axe", subkind="war axe", w = 2, h = 3, file = "axe", layout = { {true, true}, {true, true}, {true, false} } },
 
-{name = "armor", category = "armor", kind="body armor", subkind="platemail", w = 2, h = 4, file = "armor", layout = { {true, true}, {true, true}, {true, true}, {true, true} } },
+{name = "armor", category = "armor", kind="body_armor", subkind="platemail", w = 2, h = 4, file = "armor", layout = { {true, true}, {true, true}, {true, true}, {true, true} } },
 
 {name = "bow", category = "weapon", kind="bow", subkind="wood bow", w = 2, h = 4, file = "bow", layout = { {true, false}, {true, true}, {true, true}, {true, false} } },
 
@@ -30,34 +30,145 @@ local loots = {
 
 }
 
+-- provide base statistics for various kinds of loot
+local base_stats = {
+	sword = {attack = 3},
+	club = {attack = 4},
+	axe = {attack = 5},
+	bow = {attack = 6},
+	staff = {attack = 4},
+	
+	shield = {defense = 4},
+	body_armor = {defense = 8},
+	gauntlet = {defense = 1, attack = 1},
+	helmet = {defense = 5}, 
+}
+
 local prefixes = {
 	common = {"dull", "rusty", "questionable", "underwhelming", "crude", "dodgy"},
+	fancy = {"solid", "respectable", "decent", "whelming", "not half bad", "workmanlike", "hunky dorey"},
+	rare = {"stunning", "quite good", "jaw-dropping", "overwhelming", "amazeballs", "shit hot"},
 }
 
 local suffixes = {
 	common = {"crap", "junk", "bullshit", "crumbliness", "meh", "blarg", "buyer's remorse"},
+	fancy = {"solidity", "respectability", "acceptability", "non-shittiness", "okayness"},
+	rare = {"OMG", "daaaaang", "hey gurl", "sweetness", "radness", "badassitude"},
 }
 
+local buffs = {
+	{attack = 2, prefix = "plinking", suffix = "plinks"},
+	{attack = 4, prefix = "walloping", suffix = "wallopedness"}, 
+	{attack = 5, prefix = "violent", suffix = "violence"},
+	{attack = 7, prefix = "terrifying", suffix = "terror"},
+
+	{defense = 1, prefix = "slippery", suffix = "sunblock"},
+	{defense = 3, prefix = "hardened", suffix = "hardness"},
+	{defense = 5, prefix = "rugged", suffix = "turtling"},
+	{defense = 8, prefix = "impenetrable", suffix = "diamond"},
+
+	{attack = -1, defense = -1, prefix = "cursed", suffix = "bummerness"},
+	{attack = 1, defense = 1, prefix = "blessed", suffix = "sanctification"},
+} 
+
+
+-- return a randomly selected buff for some loot
+local function get_random_buff()
+	local b = buffs[math.random(table.getn(buffs))]
+	local pre, suf
+	if math.random() > 0.5 then
+		pre = b.prefix
+	else
+		suf = b.suffix
+	end	
+
+	return b.attack or 0, b.defense or 0, pre, suff 
+end
 
 -- generate a sample bit of loop
-local function get_random_loot()
+local function get_random_loot(rank)
 	local l = loots[math.random(table.getn(loots))]
 
+	-- generate the image data from file
 	local img = love.graphics.newImage(path .. l.file .. ".png")
 
+	-- generate a name
 	local prefix, suffix
-	name = l.name
+	pretable = nil
+	suftable = nil
+	if rank == 1 then
+		pretable = prefixes.common
+		suftable = suffixes.common
+	elseif rank == 2 then
+		pretable = prefixes.fancy
+		suftable = suffixes.fancy
+	elseif rank == 3 then
+		pretable = prefixes.rare
+		suftable = suffixes.rare
+	else
+		print("WTF IS THIS RANK: " .. rank)
+		return nil
+	end
+
 	if math.random() > 0.5 then
-		prefix = prefixes.common[math.random(table.getn(prefixes.common))]
-		name = prefix .. " " .. name 
+		prefix = pretable[math.random(table.getn(pretable))]
+--		name = prefix .. " " .. name 
 	end
 	if math.random() > 0.5 then
-		suffix = suffixes.common[math.random(table.getn(suffixes.common))]
-		name = name .. " of " .. suffix
+		suffix = suftable[math.random(table.getn(suftable))]
+--		name = name .. " of " .. suffix
 	end
  
-	return name, l.category, l.kind, l.subkind, l.w, l.h, img, l.layout
+	-- get base statistics from kind
+	local attack = base_stats[l.kind].attack or 0
+	local defense = base_stats[l.kind].defense or 0
+
+	-- add buffs for higher-rank loot
+	local prefix_buff, suffix_buff
+	for i=1, rank - 1 do
+		local attack_buff, defense_buff, pb, sb = get_random_buff()
+		attack = attack + attack_buff
+		defense = defense + defense_buff
+
+		if prefix_buff and pb then
+			prefix_buff = prefix_buff .. ", " .. pb
+		elseif pb then
+			prefix_buff = pb
+		end
+		if suffix_buff and sb then
+			suffix_buff = suffix_buff .. " and " .. sb
+		elseif sb then
+			suffix_buff = sb
+		end
+
+	end
+
+	-- finalize name string
+	local namestr = ""
+
+	if prefix_buff then namestr = namestr .. prefix_buff end
+
+	if prefix then 
+		if prefix_buff then 
+			namestr = namestr .. ", " .. prefix
+		else 
+			namestr = namestr .. prefix
+		end
+	end
+
+	if namestr ~= "" then namestr = namestr .. " " end
+
+	namestr = namestr .. l.name
+
+	if suffix_buff then
+		namestr = namestr .. " of " .. suffix_buff
+	elseif suffix then
+		namestr = namestr .. " of " .. suffix
+	end
+	
+	return namestr, l.category, l.kind, l.subkind, attack, defense, l.w, l.h, img, l.layout
 end
+
 
 -- return the layout of this piece
 local function layout(loot)
@@ -137,7 +248,8 @@ function new()
 
 	local o = {}
 	o.id = get_unique_loot_id()
-	o.name, o.category, o.kind, o.subkind, o.width, o.height, o.loot_image, o.tile_layout = get_random_loot()
+	o.rank = math.random(3) -- common, fancy, rare
+	o.name, o.category, o.kind, o.subkind, o.attack, o.defense, o.width, o.height, o.loot_image, o.tile_layout = get_random_loot(o.rank)
 	o.rotation = 0	
 	o.tilex = 1 -- x and y coordinates of origin in board space
 	o.tiley = 1
