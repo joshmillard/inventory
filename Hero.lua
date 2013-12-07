@@ -20,7 +20,7 @@ local names = {
 local hom_loot_defs = {
 	head = {x=80, y=20, width=120, height=80},
 	body = {x=100, y=120, width=80, height=160},
-	hands = {x=40, y=160, width=40, height=80},
+	arms = {x=40, y=160, width=40, height=80},
 	feet = {x=100, y=300, width=80, height=80},
 	item = {x=200, y=260, width=40, height=40},
 	lefthand = {x=260, y=60, width=80, height=120},
@@ -61,6 +61,31 @@ function get_random_hero()
 
 end
 
+-- passed a given piece of loot, put it on the hero, possibly ditching previous gear
+local function put_gear_on_hero(hero, loot)
+	if not loot then
+		-- hrm! the nerve!
+		return nil
+	end
+	if loot.slot == "hand" then
+		-- special case, we have both a left hand and a right hand
+		-- though this is silly hacky bullshit, really we should be told which hand we're
+		-- equipping on the way into this function, TODO that
+		if not hero.equipment["lefthand"] then
+			hero.equipment["lefthand"] = loot
+		else
+			hero.equipment["righthand"] = loot
+		end
+	else
+		hero.equipment[loot.slot] = loot
+	end
+
+	loot:orient_for_homunculus()
+	
+-- TODO: now would be a good time to recalculate hero's aggregate stats based on equipment change
+end
+	
+
 -- construct the hero
 function new()
 	local o = {}
@@ -86,5 +111,8 @@ function new()
 
 	o.images = {} -- hash of sprite collections for displaying hero avatar
 	
+	-- methods
+	o.put_gear_on_hero = put_gear_on_hero
+
 	return o
 end

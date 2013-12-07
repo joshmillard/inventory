@@ -76,6 +76,9 @@ function love.keypressed(key)
 	elseif key == "p" then
 		b:print_board()
 
+	elseif key == "e" then
+		hero:put_gear_on_hero(curr_p)
+		get_new_curr_piece()
 	end
 
 end
@@ -427,8 +430,18 @@ function draw_hero_homunculus()
 	love.graphics.setColor(255,255,255,255)
 	love.graphics.draw(hero.hom.image, homx, homy)
 
+	-- draw equipped loot, if any, for each slot
 	for k,v in pairs(hero.hom.loot) do
 		love.graphics.setColor(0,0,0)
 		love.graphics.printf(k, homx + v.x, homy + v.y + (v.height / 2) - 10, v.width, "center")
+		if hero.equipment[k] then
+			local l = hero.equipment[k]
+			local xoff = homx + v.x + ((v.width - (l:w() * TSIZE)) / 2)
+			local yoff = homy + v.y + ((v.height - (l:h() * TSIZE)) / 2)
+
+			love.graphics.setColor(255,255,255,255)
+			love.graphics.draw(l:image(), xoff, yoff, math.rad(l:angle()), 1, 1, l:image_offset().x, l:image_offset().y )
+
+		end
 	end
 end

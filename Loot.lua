@@ -10,23 +10,23 @@ local id_counter = 1
 -- define some basic loot
 local loots = {
 
-{name = "sword", category = "weapon", kind="sword", subkind="broadsword", w = 1, h = 3, file = "sword", layout = { {true}, {true}, {true} } },
+{name = "sword", slot = "hand", category = "weapon", kind="sword", subkind="broadsword", w = 1, h = 3, file = "sword", layout = { {true}, {true}, {true} } },
 
-{name = "buckler", category = "armor", kind="shield", subkind="buckler", w = 2, h = 2, file = "buckler", layout = { {true, true}, {true, true} } },
+{name = "buckler", slot = "hand", category = "armor", kind="shield", subkind="buckler", w = 2, h = 2, file = "buckler", layout = { {true, true}, {true, true} } },
 
-{name = "mace", category = "weapon", kind="club", subkind="mace", w = 2, h = 3, file = "mace", layout = { {true, false}, {true, true}, {false, true} } },
+{name = "mace", slot = "hand", category = "weapon", kind="club", subkind="mace", w = 2, h = 3, file = "mace", layout = { {true, false}, {true, true}, {false, true} } },
 
-{name = "axe", category = "weapon", kind="axe", subkind="war axe", w = 2, h = 3, file = "axe", layout = { {true, true}, {true, true}, {true, false} } },
+{name = "axe", slot = "hand", category = "weapon", kind="axe", subkind="war axe", w = 2, h = 3, file = "axe", layout = { {true, true}, {true, true}, {true, false} } },
 
-{name = "armor", category = "armor", kind="body_armor", subkind="platemail", w = 2, h = 4, file = "armor", layout = { {true, true}, {true, true}, {true, true}, {true, true} } },
+{name = "armor", slot = "body", category = "armor", kind="body_armor", subkind="platemail", w = 2, h = 4, file = "armor", layout = { {true, true}, {true, true}, {true, true}, {true, true} } },
 
-{name = "bow", category = "weapon", kind="bow", subkind="wood bow", w = 2, h = 4, file = "bow", layout = { {true, false}, {true, true}, {true, true}, {true, false} } },
+{name = "bow", slot = "hand", category = "weapon", kind="bow", subkind="wood bow", w = 2, h = 4, file = "bow", layout = { {true, false}, {true, true}, {true, true}, {true, false} } },
 
-{name = "gauntlet", category = "armor", kind="gauntlet", subkind="plate gauntlet", w = 2, h = 1, file = "gauntlet", layout = { {true, true} } },
+{name = "gauntlet", slot = "arms", category = "armor", kind="gauntlet", subkind="plate gauntlet", w = 2, h = 1, file = "gauntlet", layout = { {true, true} } },
 
-{name = "helmet", category = "armor", kind="helmet", subkind="wildling helmet", w = 3, h = 2, file = "helmet", layout = { {true, false, true}, {true, true, true} } },
+{name = "helmet", slot = "head", category = "armor", kind="helmet", subkind="wildling helmet", w = 3, h = 2, file = "helmet", layout = { {true, false, true}, {true, true, true} } },
 
-{name = "staff", category = "weapon", kind="staff", subkind="gem staff", w = 1, h = 4, file = "staff", layout = { {true}, {true}, {true}, {true} } },
+{name = "staff", slot = "hand", category = "weapon", kind="staff", subkind="gem staff", w = 1, h = 4, file = "staff", layout = { {true}, {true}, {true}, {true} } },
 
 }
 
@@ -180,7 +180,7 @@ local function get_random_loot_by_subkind(rank, subkind)
 		namestr = namestr .. " of " .. suffix
 	end
 	
-	return namestr, l.category, l.kind, l.subkind, attack, defense, l.w, l.h, img, l.layout
+	return namestr, l.slot, l.category, l.kind, l.subkind, attack, defense, l.w, l.h, img, l.layout
 end
 
 -- generate a sample bit of loop
@@ -242,6 +242,16 @@ local function rotate_clockwise(loot)
 
 end
 
+local function orient_for_homunculus(loot)
+	while loot.rotation ~= 0 do
+		rotate_clockwise(loot)
+	end
+	-- compensating for current guantlet example being oriented wrong for gear display
+	if loot.slot == "arms" then
+		rotate_clockwise(loot)
+	end
+end
+
 local function image_offset(loot)
 	local xoff = 0 
 	local yoff = 0
@@ -279,9 +289,9 @@ function new(r, subkind)
 	end
 
 	if subkind then
-		o.name, o.category, o.kind, o.subkind, o.attack, o.defense, o.width, o.height, o.loot_image, o.tile_layout = get_random_loot_by_subkind(o.rank, subkind)
+		o.name, o.slot, o.category, o.kind, o.subkind, o.attack, o.defense, o.width, o.height, o.loot_image, o.tile_layout = get_random_loot_by_subkind(o.rank, subkind)
 	else
-		o.name, o.category, o.kind, o.subkind, o.attack, o.defense, o.width, o.height, o.loot_image, o.tile_layout = get_random_loot(o.rank)
+		o.name, o.slot, o.category, o.kind, o.subkind, o.attack, o.defense, o.width, o.height, o.loot_image, o.tile_layout = get_random_loot(o.rank)
 	end
 
 	o.rotation = 0	
@@ -300,6 +310,7 @@ function new(r, subkind)
 	o.image = image
 	o.angle = angle
 	o.image_offset = image_offset
+	o.orient_for_homunculus = orient_for_homunculus
 
 	return o
 end
