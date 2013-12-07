@@ -85,9 +85,23 @@ local function get_random_buff()
 	return b.attack or 0, b.defense or 0, pre, suff 
 end
 
--- generate a sample bit of loop
-local function get_random_loot(rank)
-	local l = loots[math.random(table.getn(loots))]
+
+local function get_random_loot_by_subkind(rank, subkind)
+
+	local l = nil
+	local found = false
+	for k,v in pairs(loots) do
+		if v.subkind == subkind then
+			l = v
+			found = true
+			break
+		end
+	end
+	if not found then
+		-- fishing for a non-existent subkind, this is real bad!
+		print "no such subtype found!"
+		return nil
+	end
 
 	-- generate the image data from file
 	local img = love.graphics.newImage(path .. l.file .. ".png")
@@ -169,6 +183,11 @@ local function get_random_loot(rank)
 	return namestr, l.category, l.kind, l.subkind, attack, defense, l.w, l.h, img, l.layout
 end
 
+-- generate a sample bit of loop
+local function get_random_loot(rank)
+	local l = loots[math.random(table.getn(loots))]
+	return get_random_loot_by_subkind(rank, l.subkind)
+end
 
 -- return the layout of this piece
 local function layout(loot)
@@ -244,12 +263,27 @@ local function get_unique_loot_id()
 end
 
 -- generate a new piece of loot
-function new()
+function new(r, subkind)
 
 	local o = {}
 	o.id = get_unique_loot_id()
-	o.rank = math.random(3) -- common, fancy, rare
-	o.name, o.category, o.kind, o.subkind, o.attack, o.defense, o.width, o.height, o.loot_image, o.tile_layout = get_random_loot(o.rank)
+
+	o.rank = 1
+	if not r then
+		r = 1
+	end
+	if r >= 3 then
+		o.rank = 3
+	elseif r >= 2 then
+		o.rank = 2
+	end
+
+	if subkind then
+		o.name, o.category, o.kind, o.subkind, o.attack, o.defense, o.width, o.height, o.loot_image, o.tile_layout = get_random_loot_by_subkind(o.rank, subkind)
+	else
+		o.name, o.category, o.kind, o.subkind, o.attack, o.defense, o.width, o.height, o.loot_image, o.tile_layout = get_random_loot(o.rank)
+	end
+
 	o.rotation = 0	
 	o.tilex = 1 -- x and y coordinates of origin in board space
 	o.tiley = 1
@@ -259,6 +293,7 @@ function new()
 	o.layout = layout
 	o.rotate_clockwise = rotate_clockwise
 
+	-- methods
 	o.tx = tx
 	o.ty = ty
 	o.set_position = set_position

@@ -122,14 +122,22 @@ function drop_curr_piece()
 	if not b:check_for_overlap(curr_p) then
 		-- no overlap with current board loot, we can drop here!
 		b:add_loot_to_board(curr_p)
-		check_for_matches(curr_p)
-		get_new_curr_piece()
+		local rank = check_for_matches(curr_p)
+		if not rank then
+			-- No match, just generate a random piece
+			get_new_curr_piece()
+		else
+			-- got a match, generate a new piece of the same kind and of (potentially) greater rank
+			print("Average rank + 1 for matched set of " .. curr_p.subkind .. " is " .. rank)
+			get_new_curr_piece(rank, curr_p.subkind)
+		end 
 	else
 		-- can't drop here, maybe play a nice error noise!
 	end	
 end
 
 -- check to see if there are any three-piece matches as a result of newly-placed piece
+-- return rank value for new piece if matches found, nil otherwise
 function check_for_matches(piece)
 	local graph = {} -- hash of pieces that match this piece
 	graph[piece.id] = piece -- this piece is clearly in the list of pieces of this type touching it...
@@ -161,20 +169,31 @@ function check_for_matches(piece)
 	end
 
 	if num_matches >= 3 then
+		local average_rank = 0
 		print("Matching " .. num_matches .. " connected " .. piece.subkind .. " pieces!")
 		for k,v in pairs(graph) do
 			b:remove_loot_from_board(v)
 			print("Removing " .. v.subkind .. " #" .. v.id)
 			score = score + 1
+			average_rank = average_rank + v.rank
 		end
+		average_rank = average_rank / 3 
+		--[[
+			This is a quick and dirty way to get a sense of whether the pieces matched were
+			enough to justify sending back a better piece of equipment after a match.  Because
+			we divide by three regardless of the number of matches, it's possible to match
+			a larger number of lower-rank pieces and still have a chance to reach rank up.
+		]]--
+		return average_rank + 1
 	end	
 
+	return nil
 end
 
 
 -- fetch a new piece as the current piece
-function get_new_curr_piece()
-	curr_p = Loot.new()
+function get_new_curr_piece(rank, subkind)
+	curr_p = Loot.new(rank, subkind)
 	curr_p:set_position(1, 1) 
 end
 
@@ -246,8 +265,6 @@ function draw_curr_piece_stats()
 	love.graphics.print("ID:     " .. curr_p.id, 5, 380)
 	love.graphics.print("At/Df:  " .. curr_p.attack .. "/" .. curr_p.defense, 5, 395)
 	love.graphics.print("Rank:   " .. curr_p.rank, 5, 410)
---	love.graphics.print("origin: " .. curr_p:tx() .. "," .. curr_p:ty(), 5, 395)
---	love.graphics.print("w,h:    " .. curr_p:w() .. "," .. curr_p:h(), 5, 410)
 
 end
 
