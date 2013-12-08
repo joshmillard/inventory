@@ -2,6 +2,8 @@ module(..., package.seeall);
 
 -- the bold, fearless, doomed hero you're assisting in their dungeon crawl
 
+require "Sprite"
+
 local classlist = {"fighter", "wizard", "rogue"}
 
 local class = {
@@ -139,6 +141,22 @@ local function switch_anim(hero, anim)
 	hero.anim_frame = 1
 end
 
+-- set up the sprite images/animation for the hero
+local function init_sprite()
+	local stand = love.graphics.newImage("art/crawl/hero_standing.png")
+  local walk = love.graphics.newImage("art/crawl/hero_walking.png")
+  local attack = love.graphics.newImage("art/crawl/hero_attacking.png")
+
+	local s = Sprite.new()
+	s:add_anim("stand", { stand })
+	s:add_anim("walk", {walk, stand })
+	s:add_anim("attack", {attack, stand })
+
+	s:switch_anim("stand")
+
+	return s
+end
+
 -- construct the hero
 function new()
 	local o = {}
@@ -163,6 +181,8 @@ function new()
 	o.hom.image = {}
 	o.hom.loot = {}
 	o.hom.image, o.hom.loot = init_homunculus()
+
+	o.sprite = init_sprite()
 
 	o.images = init_images() -- hash of sprite collections for displaying hero avatar
 	o.anim_state = "stand"	

@@ -51,7 +51,7 @@ function love.update(dt)
 	update_mouse_board_position()
 
 	-- animate the hero
-	hero:animate(dt)
+	hero.sprite:animate(dt)
 	
 	if love.keyboard.isDown("w") then
 		dungeon:advance_backdrop(200*dt)
@@ -99,10 +99,10 @@ function love.keypressed(key)
 		get_new_curr_piece()
 
 	elseif key == "w" then
-		hero:switch_anim("walk")
+		hero.sprite:switch_anim("walk")
 
 	elseif key == "f" then
-		hero:switch_anim("attack")
+		hero.sprite:switch_anim("attack")
 
 	end
 
@@ -111,9 +111,9 @@ end
 function love.keyreleased(key)
 
 	if key == "w" then
-		hero:switch_anim("stand")
+		hero.sprite:switch_anim("stand")
 	elseif key == "f" then
-		hero:switch_anim("stand")
+		hero.sprite:switch_anim("stand")
 
 	end
 end
@@ -512,6 +512,10 @@ function draw_dungeon_hero()
 	local DHEROX = 50
 	local DHEROY = 590
 
-	love.graphics.setColor(255,255,255,255)
-	love.graphics.draw(hero.images[hero.anim_state][hero.anim_frame], DHEROX, DHEROY)
+	if hero.sprite:curr_frame() then
+		-- make sure this exists before we draw it; this should really probably be enforced better
+		-- elsewhere in game logic, but, hey.
+		love.graphics.setColor(255,255,255,255)
+		love.graphics.draw(hero.sprite:curr_frame(), DHEROX, DHEROY)
+	end
 end
