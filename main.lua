@@ -69,7 +69,6 @@ function love.draw()
 	draw_hero_homunculus()
 	draw_board()
 	draw_dungeon()
-	draw_dungeon_hero()
 	draw_curr_piece()
 	draw_curr_piece_stats()
 	draw_hover_piece_stats()
@@ -502,6 +501,9 @@ function draw_dungeon()
 		love.graphics.setColor(255,255,255,255)
 		love.graphics.draw(dungeon.tile_list[i], (dungeon.tile_width  * (i-1)) + DUNGEONX - dungeon.tile_pos, DUNGEONY)
 	end
+
+	-- draw the hero
+	draw_dungeon_hero()
 
 	-- and fade that shit
 	love.graphics.setColor(255,255,255)
