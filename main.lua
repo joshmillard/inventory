@@ -18,11 +18,13 @@ HOMY = 120
 require "Board"
 require "Loot"
 require "Hero"
+require "Dungeon"
 
 -- global structures
 b = nil 	-- the board
 curr_p = nil -- our current piece in play
-hero = nil
+hero = nil -- our brave, doomed hero
+dungeon = nil -- our dungeon
 
 score = 0 -- silly placeholder matching metric
 
@@ -38,14 +40,22 @@ function love.load()
 	get_new_curr_piece()
 
 	hero = Hero.new()
-	print(hero.name .. " the " .. hero.class .. " has " .. hero.hp .. " of max " .. hero.max_hp .. " hitpoints, with " .. hero.attack .. " attack and " .. hero.defense .. " defense.")
+
+	dungeon = Dungeon.new()	
+
 end
 
 -- event loop
 function love.update(dt)
 	-- check on some mouse position stuff
 	update_mouse_board_position()
-		
+
+	-- animate the hero
+	hero:animate(dt)
+	
+	if love.keyboard.isDown("w") then
+		dungeon:advance_backdrop(200*dt)
+	end
 
 end
 
@@ -58,6 +68,8 @@ function love.draw()
 	draw_hero_stats()
 	draw_hero_homunculus()
 	draw_board()
+	draw_dungeon()
+	draw_dungeon_hero()
 	draw_curr_piece()
 	draw_curr_piece_stats()
 	draw_hover_piece_stats()
@@ -85,8 +97,25 @@ function love.keypressed(key)
 	elseif key == "e" then
 		hero:put_gear_on_hero(curr_p)
 		get_new_curr_piece()
+
+	elseif key == "w" then
+		hero:switch_anim("walk")
+
+	elseif key == "f" then
+		hero:switch_anim("attack")
+
 	end
 
+end
+
+function love.keyreleased(key)
+
+	if key == "w" then
+		hero:switch_anim("stand")
+	elseif key == "f" then
+		hero:switch_anim("stand")
+
+	end
 end
 
 -- handle mousebutton events
@@ -464,4 +493,25 @@ function draw_hero_homunculus()
 
 		end
 	end
+end
+
+function draw_dungeon()
+	local DUNGEONX = 10
+	local DUNGEONY = 530
+	for i=1, 4 do
+		love.graphics.setColor(255,255,255,255)
+		love.graphics.draw(dungeon.tile_list[i], (dungeon.tile_width  * (i-1)) + DUNGEONX - dungeon.tile_pos, DUNGEONY)
+	end
+
+	-- and fade that shit
+	love.graphics.setColor(255,255,255)
+	love.graphics.draw(dungeon.backdrop_fademask, DUNGEONX, DUNGEONY)
+end
+
+function draw_dungeon_hero()
+	local DHEROX = 50
+	local DHEROY = 590
+
+	love.graphics.setColor(255,255,255,255)
+	love.graphics.draw(hero.images[hero.anim_state][hero.anim_frame], DHEROX, DHEROY)
 end

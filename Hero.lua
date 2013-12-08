@@ -97,11 +97,47 @@ local function put_gear_on_hero(hero, loot)
 	end
 
 	loot:orient_for_homunculus()
-	
--- TODO: now would be a good time to recalculate hero's aggregate stats based on equipment change
 	hero:recalculate_hero_stats()
 end
-	
+
+-- load up some image data
+function init_images()
+	local stand = love.graphics.newImage("art/crawl/hero_standing.png")
+	local walk = love.graphics.newImage("art/crawl/hero_walking.png")
+	local attack = love.graphics.newImage("art/crawl/hero_attacking.png")
+
+	local anims = { 
+		stand = { stand }, 
+		walk = { walk, stand }, 
+		attack = { attack, stand } 
+	}
+
+	return anims
+end
+
+-- update animation frame for hero if enough time has passed
+local function animate(hero, dt)
+	local delay = 0.1
+	hero.anim_timer = hero.anim_timer + dt
+	if hero.anim_timer > delay then
+		-- we've been on this frame long enough, let's move to the next one
+		local frames = hero.images[hero.anim_state]
+		local max_frame = table.getn(frames)
+		hero.anim_frame = hero.anim_frame + 1
+		if hero.anim_frame > max_frame then
+			-- loop back to the original frame if we were on the last one already
+			hero.anim_frame = 1
+		end
+		hero.anim_timer = hero.anim_timer - delay
+	end
+end
+
+-- move to walking animation
+local function switch_anim(hero, anim)
+	hero.anim_timer = 0
+	hero.anim_state = anim
+	hero.anim_frame = 1
+end
 
 -- construct the hero
 function new()
@@ -128,11 +164,16 @@ function new()
 	o.hom.loot = {}
 	o.hom.image, o.hom.loot = init_homunculus()
 
-	o.images = {} -- hash of sprite collections for displaying hero avatar
-	
+	o.images = init_images() -- hash of sprite collections for displaying hero avatar
+	o.anim_state = "stand"	
+	o.anim_timer = 0
+	o.anim_frame = 1
+
 	-- methods
 	o.put_gear_on_hero = put_gear_on_hero
 	o.recalculate_hero_stats = recalculate_hero_stats
+	o.animate = animate
+	o.switch_anim = switch_anim
 
 	return o
 end
