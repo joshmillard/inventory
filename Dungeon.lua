@@ -8,7 +8,10 @@ module(..., package.seeall);
 - various dungeon data and shit and who knows just what, let's go crazy
 --]]
 
+require "Encounter"
+
 DLENGTH = 6 -- how much of the dungeon backdrop to keep around
+ELENGTH = 6 -- number of encounters to keep stocked
 
 -- load image assets for backdrop
 local function load_backdrop_images()
@@ -31,7 +34,6 @@ local function init_backdrop_tiles(d)
 		d:add_backdrop_tile()
 	end
 end
-
 
 -- add another tile to the list
 local function add_backdrop_tile(d)
@@ -57,7 +59,41 @@ local function advance_backdrop(d, x)
 		d:discard_backdrop_tile()
 		d:add_backdrop_tile()
 	end
+
+	d:advance_encounters(x)
 end
+
+-- set up some initial encounters
+local function init_encounters(d)
+	for i=1, ELENGTH do
+		d:add_encounter(100 + 160*i)
+	end
+end
+
+-- add another encounter to the list
+local function add_encounter(d, xpos)
+	table.insert(d.encounters, Encounter.new(xpos))
+end
+
+-- remove first encounter from list
+local function discard_encounter(d)
+	table.remove(d.encounters, 1)
+end
+
+-- advance the encounters
+local function advance_encounters(d, x)
+	for i,v in ipairs(d.encounters) do
+		v.xpos = v.xpos - x
+		if v.xpos < 0 then
+			-- scrolled off screen, don't need you anymore...
+			d:discard_encounter()
+			print("Discarding an encounter...")
+		end
+	end
+end
+
+-- get position of nearest encounter for calculating when the hero should stop walking
+--  and have an encounter
 
 -- instantiate a dungeon!
 function new()
@@ -67,6 +103,9 @@ function new()
 	o.advance_backdrop = advance_backdrop
 	o.add_backdrop_tile = add_backdrop_tile
 	o.discard_backdrop_tile = discard_backdrop_tile
+	o.advance_encounters = advance_encounters 
+	o.add_encounter = add_encounter
+	o.discard_encounter = discard_encounter
 
 	-- data an initialization	
 	o.backdrop_images = load_backdrop_images()
@@ -76,6 +115,9 @@ function new()
 	o.tile_width = 160
 	o.tile_pos = 0
 	init_backdrop_tiles(o)
+
+	o.encounters = {}
+	init_encounters(o)
 
 	return o
 
