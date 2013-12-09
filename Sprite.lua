@@ -21,13 +21,11 @@ local function switch_anim(sprite, name)
   sprite.anim_timer = 0
   sprite.anim_state = name
   sprite.anim_frame = 1
-	print("Switching to anim state " .. sprite.anim_state)
 end
 
 -- register a new animation set with this sprite
 local function add_anim(sprite, name, images)
 	sprite.anims[name] = images
-	print("Registering sprite animation " .. name .. " with " .. table.getn(images) .. " frames.")
 end
 
 -- advance timer by dt seconds, change frame if it's been long enough on the current frame

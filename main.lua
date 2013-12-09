@@ -19,12 +19,15 @@ require "Board"
 require "Loot"
 require "Hero"
 require "Dungeon"
+require "Monster"
 
 -- global structures
 b = nil 	-- the board
 curr_p = nil -- our current piece in play
 hero = nil -- our brave, doomed hero
 dungeon = nil -- our dungeon
+
+debug_monster = nil -- just a debug test
 
 score = 0 -- silly placeholder matching metric
 
@@ -43,6 +46,9 @@ function love.load()
 
 	dungeon = Dungeon.new()	
 
+	Monster.init_monster_sprites()
+	debug_monster = Monster.new()
+	debug_monster.sprite:switch_anim("attack")
 end
 
 -- event loop
@@ -51,8 +57,11 @@ function love.update(dt)
 	update_mouse_board_position()
 
 	-- animate the hero
+	-- TODO: generalize to "animate_sprites(dt)" call that will iterate through a list of all
+	--  active sprites in the game...
 	hero.sprite:animate(dt)
-	
+	debug_monster.sprite:animate(dt)
+
 	if love.keyboard.isDown("w") then
 		dungeon:advance_backdrop(200*dt)
 	end
@@ -504,6 +513,7 @@ function draw_dungeon()
 
 	-- draw the hero
 	draw_dungeon_hero()
+	draw_dungeon_monsters()
 
 	-- and fade that shit
 	love.graphics.setColor(255,255,255)
@@ -519,5 +529,12 @@ function draw_dungeon_hero()
 		-- elsewhere in game logic, but, hey.
 		love.graphics.setColor(255,255,255,255)
 		love.graphics.draw(hero.sprite:curr_frame(), DHEROX, DHEROY)
+	end
+end
+
+function draw_dungeon_monsters()
+	if debug_monster.sprite:curr_frame() then
+		love.graphics.setColor(255,255,255,255)
+		love.graphics.draw(debug_monster.sprite:curr_frame(), 250, 590)
 	end
 end
