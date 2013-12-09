@@ -74,6 +74,7 @@ function love.draw()
 	draw_hero_homunculus()
 	draw_board()
 	draw_dungeon()
+	draw_next_encounter_stats()
 	draw_curr_piece()
 	draw_curr_piece_stats()
 	draw_hover_piece_stats()
@@ -529,14 +530,45 @@ function draw_dungeon_hero()
 end
 
 function draw_dungeon_monsters()
+	local MONSTER_XOFFSET = 80
 	for i,v in ipairs(dungeon.encounters) do
 		if v.encounter.sprite:curr_frame() then
-			if v.xpos > 600 then
+			if v.xpos > 500 then
 				-- probably shouldn't be able to see this guy yet, for now hackily just decline to draw...
 			else
 				love.graphics.setColor(255,255,255,255)
-				love.graphics.draw(v.encounter.sprite:curr_frame(), v.xpos, 590)
+				love.graphics.draw(v.encounter.sprite:curr_frame(), v.xpos + MONSTER_XOFFSET, 590)
 			end
 		end
+	end
+end
+
+function draw_next_encounter_stats()
+	local NEXTE_X = 600
+	local NEXTE_Y = 600
+	local ypos = 0
+
+	love.graphics.setColor(255,255,255,255)
+	love.graphics.print("Next encounter:", NEXTE_X, NEXTE_Y + ypos)
+	ypos = ypos + 20
+
+	local e = dungeon:get_next_encounter()
+	if not e then
+		-- no actual encounter coming up!
+		love.graphics.setColor(255,0,0,255)
+		love.graphics.print("None loaded!", NEXTE_X, NEXTE_Y + ypos)
+	elseif e.kind == "monster" then
+		love.graphics.setColor(255,255,255)
+		love.graphics.print(e.encounter.name .. " (" .. e.kind .. ")", NEXTE_X, NEXTE_Y + ypos)
+		ypos = ypos + 15
+		love.graphics.print("Attack: " .. e.encounter.attack, NEXTE_X, NEXTE_Y + ypos)
+		ypos = ypos + 15
+		love.graphics.print("Defense: " .. e.encounter.defense, NEXTE_X, NEXTE_Y + ypos)
+		ypos = ypos + 15
+		love.graphics.print("HP: " .. e.encounter.max_hp, NEXTE_X, NEXTE_Y + ypos)
+		ypos = ypos + 15
+	else
+		-- worry about when there's more encounter types!
+
 	end
 end

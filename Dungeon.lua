@@ -85,7 +85,7 @@ local function advance_encounters(d, x)
 	for i,v in ipairs(d.encounters) do
 		v.xpos = v.xpos - x
 		if v.xpos < 0 then
-			-- scrolled off screen, don't need you anymore...
+			-- ditch after it gets too close, this is just a hack for now
 			d:discard_encounter()
 			print("Discarding an encounter...")
 		end
@@ -94,6 +94,14 @@ end
 
 -- get position of nearest encounter for calculating when the hero should stop walking
 --  and have an encounter
+local function get_next_encounter(dungeon)
+	if table.getn(dungeon.encounters) == 0 then
+		print("No encounters spawned, buh!")
+		return nil
+	end
+	return dungeon.encounters[1]
+end
+
 
 -- instantiate a dungeon!
 function new()
@@ -106,6 +114,8 @@ function new()
 	o.advance_encounters = advance_encounters 
 	o.add_encounter = add_encounter
 	o.discard_encounter = discard_encounter
+	o.get_next_encounter = get_next_encounter
+
 
 	-- data an initialization	
 	o.backdrop_images = load_backdrop_images()
