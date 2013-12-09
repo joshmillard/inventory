@@ -30,6 +30,7 @@ end
 
 -- advance timer by dt seconds, change frame if it's been long enough on the current frame
 local function animate(sprite, dt)
+	local looped = false
 	if not sprite.anims[sprite.anim_state] then
 		-- looks like we're not actually ready to animate yet, get outta here
 		return nil
@@ -43,9 +44,13 @@ local function animate(sprite, dt)
     if sprite.anim_frame > max_frame then
       -- loop back to the original frame if we were on the last one already
       sprite.anim_frame = 1
+			looped = true
     end
     sprite.anim_timer = sprite.anim_timer - sprite.anim_delay
   end
+
+	-- returns true if we looped back to first frome, so caller can check for completed cycle
+	return looped
 end
 
 -- return the image for the current animation and frame

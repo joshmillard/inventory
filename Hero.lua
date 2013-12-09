@@ -112,7 +112,7 @@ local function init_sprite()
 	local s = Sprite.new()
 	s:add_anim("stand", { stand })
 	s:add_anim("walk", {walk, stand })
-	s:add_anim("attack", {attack, stand })
+	s:add_anim("attack", {attack, stand, attack })
 
 	s:switch_anim("stand")
 

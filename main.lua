@@ -32,6 +32,9 @@ score = 0 -- silly placeholder matching metric
 mouse_tx = 0
 mouse_ty = 0
 
+gamestate = nil -- state value for tracking game flow
+fightstate = nil -- sub-state value for tracking fight flow
+
 function love.load()
 
 	love.graphics.setMode(SCREENWIDTH, SCREENHEIGHT, false, true, 0)
@@ -45,6 +48,9 @@ function love.load()
 	Monster.init_monster_sprites()
 	dungeon = Dungeon.new()	
 
+	gamestate = "moving"
+	hero.sprite:switch_anim("walk")
+
 end
 
 -- event loop
@@ -57,6 +63,87 @@ function love.update(dt)
 	--  active sprites in the game...
 	hero.sprite:animate(dt)
 	-- should animate monster in dungeon, too...
+
+	local monst = dungeon:get_next_encounter()
+
+	if gamestate == "moving" then
+		local distance_to_next = monst.xpos
+		if distance_to_next <= 200*dt then
+			-- we've arrived at the next encounter!
+			dungeon:advance_backdrop(distance_to_next)
+			hero.sprite:switch_anim("attack")
+			gamestate = "fighting"
+			fightstate = "hero attack anim"
+		else
+			-- we're still not there, keep walking
+			dungeon:advance_backdrop(200*dt)
+		end
+		hero.sprite:animate(dt)
+
+	elseif gamestate == "fighting" then
+		-- handle fighty bits
+		if fightstate == "hero attack anim" then
+			-- check to see if we're done with the attack anim yet
+			if hero.sprite:animate(dt) then
+				-- we looped ot the end of the fight animation, let's move on to damage calc
+				fightstate = "hero attack calc"
+				hero.sprite:switch_anim("stand")
+			end
+		elseif fightstate == "hero attack calc" then
+			local damage = hero.curr_attack - monst.encounter.defense
+			if damage < 0 then
+				damage = 0
+			end
+			print("hero does " .. damage .. " damage!")
+			monst.encounter.hp = monst.encounter.hp - damage
+			if monst.encounter.hp > 0 then
+				-- monster survived hero's attack, now he gets a whack
+				fightstate = "monster attack anim"
+				monst.encounter.sprite:switch_anim("attack")
+			else
+				-- fight's over, hero won, let's nix the monster and get a piece of loot
+				-- TODO ^^^
+				print("monster dispatched, let's get a piece!")
+				local spoils = monst.encounter:get_loot()
+				curr_p = Loot.new(1, spoils)
+				print("Ooh, it's a " .. spoils)
+				dungeon:discard_encounter()
+				gamestate = "placing"
+			end
+		elseif fightstate == "monster attack anim" then
+			if monst.encounter.sprite:animate(dt) then
+				fightstate = "monster attack calc"
+				monst.encounter.sprite:switch_anim("stand")
+			end
+		elseif fightstate == "monster attack calc" then
+			local damage = monst.encounter.attack - hero.curr_defense
+			if damage < 0 then
+				damage = 0
+			end
+			hero.hp = hero.hp - damage
+			print("monster does " .. damage .. " damage to hero!")
+			if hero.hp > 0 then
+				-- hero survived and gets another whack at monnster
+				fightstate = "hero attack anim"
+				hero.sprite:switch_anim("attack")
+			else
+				-- hero is dead, end of dungeon crawl, bummer!
+				print("Hero died, back to town we should go!")
+				-- TODO ^^^
+			end
+		else
+			-- mysterious situation!
+			print("What the hell fightstate is this: " .. fightstate)
+		end
+	
+
+	elseif gamestate == "placing" then
+		-- handle loot-placing bits
+	else
+		-- what gamestate is this omg?
+		print("MYSTERY GAMESTATE: " .. gamestate)
+	end
+
 
 	if love.keyboard.isDown("w") then
 		dungeon:advance_backdrop(200*dt)
@@ -565,7 +652,7 @@ function draw_next_encounter_stats()
 		ypos = ypos + 15
 		love.graphics.print("Defense: " .. e.encounter.defense, NEXTE_X, NEXTE_Y + ypos)
 		ypos = ypos + 15
-		love.graphics.print("HP: " .. e.encounter.max_hp, NEXTE_X, NEXTE_Y + ypos)
+		love.graphics.print("HP (max): " .. e.encounter.hp .. "(" .. e.encounter.max_hp .. ")", NEXTE_X, NEXTE_Y + ypos)
 		ypos = ypos + 15
 	else
 		-- worry about when there's more encounter types!
