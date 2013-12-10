@@ -51,9 +51,6 @@ function love.load()
 	init_title()
 	gamemode = "title"
 
---	gamestate = "moving"
---	hero.sprite:switch_anim("walk")
-
 end
 
 -- do the appropriate setup (and shutdown?) of stuff to switch from the
@@ -67,8 +64,8 @@ function switch_gamemode(mode)
 		-- but for now just switch some real basic stuff
 		print("Switching game mode to dungeon...")
 		gamemode = "dungeon"
-		gamestate = "placing"
-		hero.sprite:switch_anim("stand")
+		gamestate = "moving"
+		hero.sprite:switch_anim("walk")
 
 	else
 		-- what game mode is this?
@@ -107,14 +104,28 @@ elseif gamemode == "dungeon" then
 		if distance_to_next <= 200*dt then
 			-- we've arrived at the next encounter!
 			dungeon:advance_backdrop(distance_to_next)
-			hero.sprite:switch_anim("attack")
-			gamestate = "fighting"
-			fightstate = "hero attack anim"
+			
+			-- and now switch modes based on what kind of thing we're Encountering
+			if monst.kind == "monster" then
+				hero.sprite:switch_anim("attack")
+				gamestate = "fighting"
+				fightstate = "hero attack anim"
+			elseif monst.kind == "sign" then
+				-- switch to Readin' A Sign mode
+				hero.sprite:switch_anim("stand")
+				gamestate = "reading"
+			else
+				-- don't know what to make of this!
+				print("Mysterious encounter kind: " .. monst.kind)
+			end
 		else
 			-- we're still not there, keep walking
 			dungeon:advance_backdrop(200*dt)
 		end
 		hero.sprite:animate(dt)
+
+	elseif gamestate == "reading" then
+		-- we're just waiting for someone to hit Any Key, really...
 
 	elseif gamestate == "fighting" then
 		-- handle fighty bits
@@ -220,6 +231,10 @@ function love.draw()
 		end
 		draw_hover_piece_stats()
 
+		if gamestate == "reading" then
+			draw_encounter_text()
+		end
+
 	else
 		-- unknown gamemode, what?
 		print("Unknown gamemode: " .. gamemode)
@@ -230,7 +245,6 @@ end
 
 -- handle keyboard press events
 function love.keypressed(key)
-	-- TODO: break this stuff out by gamestate as appropriate (e.g. drop_curr_piece())
 	if key == "escape" then
 		love.event.quit()
 	end
@@ -245,33 +259,39 @@ function love.keypressed(key)
 		--elseif key == "up" or key == "down" or key == "left" or key == "right" then
 		--move_curr_piece(key)
 
-		if key == "r" then
-			rotate_curr_piece()
+		if gamestate == "reading" then
+			if key == " " then
+				-- dismiss this sign
+				dungeon:dismiss_current_encounter()
+				gamestate = "moving"
+				hero.sprite:switch_anim("walk")
+			end
 
-		elseif key == " " then
-			drop_curr_piece()
+		elseif gamestate == "placing" then
 
-		elseif key == "e" then
-			hero:put_gear_on_hero(curr_p)
-			curr_p = nil
+			if key == "r" then
+				rotate_curr_piece()
+
+			elseif key == " " then
+				drop_curr_piece()
+
+			elseif key == "e" then
+				hero:put_gear_on_hero(curr_p)
+				curr_p = nil
+			
+			end
 
 		else
-			-- some uncaptured key
-		end
-
+			-- some other gamestate...
+		end			
 
 	end -- end gamemode conditional
 
 end
 
+
 function love.keyreleased(key)
 
-	if key == "w" then
-		hero.sprite:switch_anim("stand")
-	elseif key == "f" then
-		hero.sprite:switch_anim("stand")
-
-	end
 end
 
 -- handle mousebutton events
@@ -282,7 +302,7 @@ function love.mousepressed(x, y, button)
 		-- title input
 
 	elseif gamemode == "dungeon" then
-
+	
 	if button == "r" then
 		rotate_curr_piece()
 	elseif button == "l" then
@@ -731,6 +751,11 @@ function draw_next_encounter_stats()
 		ypos = ypos + 15
 		love.graphics.print("HP (max): " .. e.encounter.hp .. "(" .. e.encounter.max_hp .. ")", NEXTE_X, NEXTE_Y + ypos)
 		ypos = ypos + 15
+
+	elseif e.kind == "sign" then
+		love.graphics.setColor(255,255,255)
+		love.graphics.print("A sign approaches!", NEXTE_X, NEXTE_Y + ypos)
+
 	else
 		-- worry about when there's more encounter types!
 
@@ -751,4 +776,24 @@ function draw_title()
 	love.graphics.draw(titleart, 12, 75)
 
 	love.graphics.print("(press any key)", 450, 700)
+end
+
+-- draw the content of an encounter sign
+function draw_encounter_text()
+
+	-- draw a wooden sign
+	love.graphics.setColor(65,67,60,255)
+	love.graphics.rectangle("fill", (SCREENWIDTH / 2) - 50, 20, 100, SCREENHEIGHT)
+	love.graphics.setColor(140, 120, 90)
+	love.graphics.rectangle("fill", (SCREENWIDTH / 2) - 30, 40, 60, SCREENHEIGHT)
+
+	love.graphics.setColor(65,67,60,255)
+	love.graphics.rectangle("fill", 100, 100, SCREENWIDTH - 200, SCREENHEIGHT - 200)
+	love.graphics.setColor(177,150,106,255)
+	love.graphics.rectangle("fill", 120, 120, SCREENWIDTH - 240, SCREENHEIGHT - 240)
+ 
+	-- and render the text
+	love.graphics.setColor(0,0,0,255)
+	love.graphics.printf(dungeon:get_next_encounter().encounter:get_text(), 300, 200, SCREENWIDTH - 600, "center")
+
 end

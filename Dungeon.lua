@@ -65,14 +65,22 @@ end
 
 -- set up some initial encounters
 local function init_encounters(d)
+
+	local tutorial_string = "Welcome to the dungeon!\n\nPlease wipe your feet.\n\nMove the current piece with the mouse; rotate it by clicking the right mouse button, and drop it in place by clicking the left mouse button.\n\nGet three or more pieces of matching loot touching and they'll be cleared from the board, yielding up a brand new piece of hopefully somewhat more useful equipment instead!\n\nYou can also press 'e' on the keyboard to have your hero fellow there equip it.\n\nThat's all for now, we're still under heavy construction.\n\nNo littering.\n\n\nTed Elf\nSenior Dark Ranger\nNational Dungeon Service"
+
+	local helloworld = d:add_encounter("sign", 600)
+	helloworld.encounter:set_text(tutorial_string)
+	
 	for i=1, ELENGTH do
-		d:add_encounter(100 + 160*i)
+		d:add_encounter("monster", 600 + 160*i)
 	end
 end
 
 -- add another encounter to the list
-local function add_encounter(d, xpos)
-	table.insert(d.encounters, Encounter.new(xpos))
+local function add_encounter(d, kind, xpos)
+	local e = Encounter.new(kind, xpos)
+	table.insert(d.encounters, e)
+	return e
 end
 
 -- remove first encounter from list
@@ -103,7 +111,7 @@ local function advance_encounters(d, x)
 		end
 	end
 	if killed then
-		d:add_encounter(800)
+		d:add_encounter("monster", 800)
 	end
 end
 

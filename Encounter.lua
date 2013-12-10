@@ -3,6 +3,7 @@ module(..., package.seeall);
 -- generic dungeon encounter container
 
 require "Monster"
+require "Sign"
 
 --[[
 	Encounters exist at a physical position within the dungeon, toward which the hero
@@ -16,6 +17,11 @@ local function get_random_encounter(kind)
 	if kind == "monster" then
 		local m = Monster.new()
 		return m
+
+	elseif kind == "sign" then
+		local s = Sign.new()
+		return s
+
 	else
 		-- don't know what to do with this sort of encounter
 		print("Bad encounter type: " .. kind)
@@ -29,10 +35,11 @@ local function advance_encounter(enc, x)
 end
 
 -- return a new encounter
-function new(xpos)
+function new(kind, xpos)
 	local o = {}
 
-	o.kind = "monster"
+	o.kind = kind
+
 	o.encounter = get_random_encounter(o.kind)
 	o.xpos = xpos
 
