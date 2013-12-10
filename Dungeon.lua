@@ -80,15 +80,30 @@ local function discard_encounter(d)
 	table.remove(d.encounters, 1)
 end
 
+-- turn our attention to the next encounter in the list
+local function dismiss_current_encounter(d)
+	d.encounter_index = d.encounter_index + 1
+	if not d.encounters[d.encounter_index] then
+		-- uh oh, there's no actual encounter here, fwiw!
+		print("no actual encounter at index " .. d.encounter_index)
+	end
+end
+
 -- advance the encounters
 local function advance_encounters(d, x)
+	local killed = false
 	for i,v in ipairs(d.encounters) do
 		v.xpos = v.xpos - x
-		if v.xpos < 0 then
+		if v.xpos < -50 then
 			-- ditch after it gets too close, this is just a hack for now
 			d:discard_encounter()
+			d.encounter_index = d.encounter_index - 1
 			print("Discarding an encounter...")
+			killed = true
 		end
+	end
+	if killed then
+		d:add_encounter(800)
 	end
 end
 
@@ -99,7 +114,7 @@ local function get_next_encounter(dungeon)
 		print("No encounters spawned, buh!")
 		return nil
 	end
-	return dungeon.encounters[1]
+	return dungeon.encounters[dungeon.encounter_index]
 end
 
 
@@ -115,7 +130,7 @@ function new()
 	o.add_encounter = add_encounter
 	o.discard_encounter = discard_encounter
 	o.get_next_encounter = get_next_encounter
-
+	o.dismiss_current_encounter = dismiss_current_encounter
 
 	-- data an initialization	
 	o.backdrop_images = load_backdrop_images()
@@ -128,6 +143,7 @@ function new()
 
 	o.encounters = {}
 	init_encounters(o)
+	o.encounter_index = 1 -- index into encounters table to the current/approaching next encounter of import
 
 	return o
 

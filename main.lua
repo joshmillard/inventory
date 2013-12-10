@@ -41,7 +41,7 @@ function love.load()
 	love.graphics.setCaption("Inventory Tetris")
 
 	b = Board.new(12,8)
-	get_new_curr_piece()
+	--get_new_curr_piece()
 
 	hero = Hero.new()
 
@@ -56,17 +56,21 @@ end
 -- event loop
 function love.update(dt)
 	-- check on some mouse position stuff
-	update_mouse_board_position()
+	if curr_p then
+		-- if we have no piece we're manhandling, we don't need to do this
+		update_mouse_board_position()
+	end
 
 	-- animate the hero
 	-- TODO: generalize to "animate_sprites(dt)" call that will iterate through a list of all
 	--  active sprites in the game...
-	hero.sprite:animate(dt)
+--	hero.sprite:animate(dt)
 	-- should animate monster in dungeon, too...
 
 	local monst = dungeon:get_next_encounter()
 
 	if gamestate == "moving" then
+		hero.sprite:animate(dt)
 		local distance_to_next = monst.xpos
 		if distance_to_next <= 200*dt then
 			-- we've arrived at the next encounter!
@@ -107,7 +111,7 @@ function love.update(dt)
 				local spoils = monst.encounter:get_loot()
 				curr_p = Loot.new(1, spoils)
 				print("Ooh, it's a " .. spoils)
-				dungeon:discard_encounter()
+				dungeon:dismiss_current_encounter()
 				gamestate = "placing"
 			end
 		elseif fightstate == "monster attack anim" then
@@ -129,6 +133,8 @@ function love.update(dt)
 			else
 				-- hero is dead, end of dungeon crawl, bummer!
 				print("Hero died, back to town we should go!")
+				gamestate = "dead"
+				hero.sprite:switch_anim("stand")
 				-- TODO ^^^
 			end
 		else
@@ -139,6 +145,15 @@ function love.update(dt)
 
 	elseif gamestate == "placing" then
 		-- handle loot-placing bits
+		if not curr_p then
+			-- no piece currently in hand, must be time to move on to next encounter...
+			gamestate = "moving"
+			hero.sprite:switch_anim("walk")
+		end
+
+	elseif gamestate == "dead" then
+		-- oh no, the hero is dead!
+
 	else
 		-- what gamestate is this omg?
 		print("MYSTERY GAMESTATE: " .. gamestate)
@@ -162,15 +177,17 @@ function love.draw()
 	draw_board()
 	draw_dungeon()
 	draw_next_encounter_stats()
-	draw_curr_piece()
-	draw_curr_piece_stats()
+	if curr_p then
+		draw_curr_piece()
+		draw_curr_piece_stats()
+	end
 	draw_hover_piece_stats()
 end
 
 
 -- handle keyboard press events
 function love.keypressed(key)
-	
+	-- TODO: break this stuff out by gamestate as appropriate (e.g. drop_curr_piece())
 	if key == "escape" then
 		love.event.quit()
 
@@ -188,7 +205,7 @@ function love.keypressed(key)
 
 	elseif key == "e" then
 		hero:put_gear_on_hero(curr_p)
-		get_new_curr_piece()
+		curr_p = nil
 
 	elseif key == "w" then
 		hero.sprite:switch_anim("walk")
@@ -298,13 +315,18 @@ end
 -- try to drop the current piece onto the board
 function drop_curr_piece()
 
+	if not curr_p then
+		print("We don't HAVE a piece, shouldn't be allowed to call drop_curr_piece() here!")
+		return
+	end
+
 	if not b:check_for_overlap(curr_p) then
 		-- no overlap with current board loot, we can drop here!
 		b:add_loot_to_board(curr_p)
 		local rank = check_for_matches(curr_p)
 		if not rank then
-			-- No match, just generate a random piece
-			get_new_curr_piece()
+			-- dismiss the piece
+			curr_p = nil
 		else
 			-- got a match, generate a new piece of the same kind and of (potentially) greater rank
 			print("Average rank + 1 for matched set of " .. curr_p.subkind .. " is " .. rank)
@@ -468,21 +490,21 @@ function draw_piece_stats(loot, x, y)
 	love.graphics.printf(draw_p.name, xpos, ypos, 200, "center")
 	ypos = ypos + 20
 	
-	if curr_p.attack > 0 then
+	if draw_p.attack > 0 then
 		love.graphics.setColor(100,200,100)
 		love.graphics.printf("Attack +" .. draw_p.attack, xpos, ypos, 200, "center")
 		ypos = ypos + 15
-	elseif curr_p.attack < 0 then
+	elseif draw_p.attack < 0 then
 		love.graphics.setColor(200,50,50)
 		love.graphics.printf("Attack " .. draw_p.attack, xpos, ypos, 200, "center")
 		ypos = ypos + 15
 	end
 
-	if curr_p.defense > 0 then
+	if draw_p.defense > 0 then
 		love.graphics.setColor(100,200,100)
 		love.graphics.printf("Defense +" .. draw_p.defense, xpos, ypos, 200, "center")
 		ypos = ypos + 15
-	elseif curr_p.defense < 0 then
+	elseif draw_p.defense < 0 then
 		love.graphics.setColor(200,50,50)
 		love.graphics.printf("Defense " .. draw_p.defense, xpos, ypos, 200, "center")
 		ypos = ypos + 15

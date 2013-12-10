@@ -7,9 +7,9 @@ require "Sprite"
 local classlist = {"fighter", "wizard", "rogue"}
 
 local class = {
-	fighter = {defense = 3, max_hp = 5},
-	wizard = {attack = 4, defense = 0, max_hp = -2},
-	rogue = {attack = 1, defense = 1},
+	fighter = {attack = 4, defense = 3, max_hp = 5},
+	wizard = {attack = 6, defense = 0, max_hp = -2},
+	rogue = {attack = 3, defense = 1},
 }
 
 local names = {
@@ -112,7 +112,7 @@ local function init_sprite()
 	local s = Sprite.new()
 	s:add_anim("stand", { stand })
 	s:add_anim("walk", {walk, stand })
-	s:add_anim("attack", {attack, stand, attack })
+	s:add_anim("attack", {attack, stand })
 
 	s:switch_anim("stand")
 
