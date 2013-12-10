@@ -108,11 +108,13 @@ local function init_sprite()
 	local stand = love.graphics.newImage("art/crawl/hero_standing.png")
   local walk = love.graphics.newImage("art/crawl/hero_walking.png")
   local attack = love.graphics.newImage("art/crawl/hero_attacking.png")
+	local grave = love.graphics.newImage("art/crawl/gravestone.png")
 
 	local s = Sprite.new()
 	s:add_anim("stand", { stand })
 	s:add_anim("walk", {walk, stand })
 	s:add_anim("attack", {attack, stand })
+	s:add_anim("dead", {grave})
 
 	s:switch_anim("stand")
 

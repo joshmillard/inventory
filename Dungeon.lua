@@ -94,8 +94,8 @@ local function advance_encounters(d, x)
 	local killed = false
 	for i,v in ipairs(d.encounters) do
 		v.xpos = v.xpos - x
-		if v.xpos < -50 then
-			-- ditch after it gets too close, this is just a hack for now
+		if v.xpos < -200 then
+			-- after this scrolls well off-screen, get rid of it
 			d:discard_encounter()
 			d.encounter_index = d.encounter_index - 1
 			print("Discarding an encounter...")

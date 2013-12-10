@@ -27,11 +27,13 @@ function init_monster_sprites()
 		local img_stand = love.graphics.newImage(artpath .. v.name .. "_standing.png")
 		local img_walk = love.graphics.newImage(artpath .. v.name .. "_walking.png")
 		local img_attack = love.graphics.newImage(artpath .. v.name .. "_attacking.png")
+		local img_grave = love.graphics.newImage(artpath .. "gravestone.png")		
 
 		local s = Sprite.new()
 		s:add_anim("stand", { img_stand })
 		s:add_anim("walk", {img_walk, img_stand })
 		s:add_anim("attack", {img_attack, img_stand })
+		s:add_anim("dead", {img_grave})
 
 		s:switch_anim("stand")
 
@@ -43,7 +45,7 @@ end
 -- return a random monster
 local function get_random_monster()
 	local m = monsters[math.random(table.getn(monsters))]
-	return m.name, m.attack, m.defense, m.max_hp, m.loot, monster_sprites[m.name]
+	return m.name, m.attack, m.defense, m.max_hp, m.loot, monster_sprites[m.name]:new_copy()
 end
 
 -- return a piece of loot from this monster's collection

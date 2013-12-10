@@ -62,6 +62,25 @@ local function curr_frame(sprite)
 	return sprite.anims[sprite.anim_state][sprite.anim_frame]
 end
 
+-- return a new instance of a sprite object with the same content as this one
+local function new_copy(sprite)
+	local c = {}
+
+	c.anims = sprite.anims
+	c.anim_timer = sprite.anim_timer
+	c.anim_state = sprite.anim_state
+	c.anim_frame = sprite.anim_frame
+	c.anim_delay = sprite.anim_delay
+
+	c.add_anim = sprite.add_anim
+	c.animate = sprite.animate
+	c.switch_anim = sprite.switch_anim
+	c.curr_frame = sprite.curr_frame
+	c.new_copy = sprite.new_copy
+
+	return c
+end
+
 -- return a new sprite
 function new()
 	local o = {}
@@ -77,6 +96,7 @@ function new()
 	o.animate = animate
 	o.switch_anim = switch_anim
 	o.curr_frame = curr_frame
+	o.new_copy = new_copy
 
 	return o
 

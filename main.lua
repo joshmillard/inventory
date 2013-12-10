@@ -111,6 +111,7 @@ function love.update(dt)
 				local spoils = monst.encounter:get_loot()
 				curr_p = Loot.new(1, spoils)
 				print("Ooh, it's a " .. spoils)
+				monst.encounter.sprite:switch_anim("dead")
 				dungeon:dismiss_current_encounter()
 				gamestate = "placing"
 			end
@@ -134,7 +135,7 @@ function love.update(dt)
 				-- hero is dead, end of dungeon crawl, bummer!
 				print("Hero died, back to town we should go!")
 				gamestate = "dead"
-				hero.sprite:switch_anim("stand")
+				hero.sprite:switch_anim("dead")
 				-- TODO ^^^
 			end
 		else
@@ -618,8 +619,8 @@ function draw_dungeon()
 	end
 
 	-- draw the hero
-	draw_dungeon_hero()
 	draw_dungeon_monsters()
+	draw_dungeon_hero()
 
 	-- and fade that shit
 	love.graphics.setColor(255,255,255)
