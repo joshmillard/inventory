@@ -32,6 +32,7 @@ score = 0 -- silly placeholder matching metric
 mouse_tx = 0
 mouse_ty = 0
 
+gamemode = nil -- state value for major game modes (title screen, dungeon crawl, etc)
 gamestate = nil -- state value for tracking game flow
 fightstate = nil -- sub-state value for tracking fight flow
 
@@ -41,20 +42,51 @@ function love.load()
 	love.graphics.setCaption("Inventory Tetris")
 
 	b = Board.new(12,8)
-	--get_new_curr_piece()
 
 	hero = Hero.new()
 
 	Monster.init_monster_sprites()
 	dungeon = Dungeon.new()	
 
-	gamestate = "moving"
-	hero.sprite:switch_anim("walk")
+	init_title()
+	gamemode = "title"
+
+--	gamestate = "moving"
+--	hero.sprite:switch_anim("walk")
+
+end
+
+-- do the appropriate setup (and shutdown?) of stuff to switch from the
+-- current gamemode to new gamemode "mode"
+function switch_gamemode(mode)
+	if mode == "title" then
+		gamemode = "title"
+	
+	elseif mode == "dungeon" then
+		-- do all sorts of dungeon setup, presumably
+		-- but for now just switch some real basic stuff
+		print("Switching game mode to dungeon...")
+		gamemode = "dungeon"
+		gamestate = "placing"
+		hero.sprite:switch_anim("stand")
+
+	else
+		-- what game mode is this?
+		print("Unknown gamemode " .. mode .. ", declining to switch from " .. gamemode .. " .")		
+	end
 
 end
 
 -- event loop
 function love.update(dt)
+
+
+if gamemode == "title" then
+	-- do title update stuff...
+
+elseif gamemode == "dungeon" then
+	-- do core gameplay loop stuff...
+
 	-- check on some mouse position stuff
 	if curr_p then
 		-- if we have no piece we're manhandling, we don't need to do this
@@ -138,6 +170,7 @@ function love.update(dt)
 				hero.sprite:switch_anim("dead")
 				-- TODO ^^^
 			end
+	
 		else
 			-- mysterious situation!
 			print("What the hell fightstate is this: " .. fightstate)
@@ -160,10 +193,8 @@ function love.update(dt)
 		print("MYSTERY GAMESTATE: " .. gamestate)
 	end
 
+end -- end gamemode condition
 
-	if love.keyboard.isDown("w") then
-		dungeon:advance_backdrop(200*dt)
-	end
 
 end
 
@@ -173,16 +204,27 @@ function love.draw()
 	love.graphics.setColor(255,255,255)
 	love.graphics.print("hey there", 10,10)
 
-	draw_hero_stats()
-	draw_hero_homunculus()
-	draw_board()
-	draw_dungeon()
-	draw_next_encounter_stats()
-	if curr_p then
-		draw_curr_piece()
-		draw_curr_piece_stats()
+	if gamemode == "title" then
+		draw_title()
+
+	elseif gamemode == "dungeon" then
+
+		draw_hero_stats()
+		draw_hero_homunculus()
+		draw_board()
+		draw_dungeon()
+		draw_next_encounter_stats()
+		if curr_p then
+			draw_curr_piece()
+			draw_curr_piece_stats()
+		end
+		draw_hover_piece_stats()
+
+	else
+		-- unknown gamemode, what?
+		print("Unknown gamemode: " .. gamemode)
 	end
-	draw_hover_piece_stats()
+
 end
 
 
@@ -191,30 +233,34 @@ function love.keypressed(key)
 	-- TODO: break this stuff out by gamestate as appropriate (e.g. drop_curr_piece())
 	if key == "escape" then
 		love.event.quit()
-
-	elseif key == "up" or key == "down" or key == "left" or key == "right" then
-		move_curr_piece(key)
-
-	elseif key == "r" then
-		rotate_curr_piece()
-
-	elseif key == " " then
-		drop_curr_piece()
-
-	elseif key == "p" then
-		b:print_board()
-
-	elseif key == "e" then
-		hero:put_gear_on_hero(curr_p)
-		curr_p = nil
-
-	elseif key == "w" then
-		hero.sprite:switch_anim("walk")
-
-	elseif key == "f" then
-		hero.sprite:switch_anim("attack")
-
 	end
+
+	if gamemode == "title" then
+		-- handly any key thing
+		switch_gamemode("dungeon")
+
+	elseif gamemode == "dungeon" then
+		-- handle main game loop input
+	
+		--elseif key == "up" or key == "down" or key == "left" or key == "right" then
+		--move_curr_piece(key)
+
+		if key == "r" then
+			rotate_curr_piece()
+
+		elseif key == " " then
+			drop_curr_piece()
+
+		elseif key == "e" then
+			hero:put_gear_on_hero(curr_p)
+			curr_p = nil
+
+		else
+			-- some uncaptured key
+		end
+
+
+	end -- end gamemode conditional
 
 end
 
@@ -231,11 +277,19 @@ end
 -- handle mousebutton events
 
 function love.mousepressed(x, y, button)
+
+	if gamemode == "title" then
+		-- title input
+
+	elseif gamemode == "dungeon" then
+
 	if button == "r" then
 		rotate_curr_piece()
 	elseif button == "l" then
 		drop_curr_piece()
 	end
+
+	end -- end gamemode conditional
 end
 
 -- check to see if the mouse is over the board, and if so update its tx/ty values
@@ -681,4 +735,20 @@ function draw_next_encounter_stats()
 		-- worry about when there's more encounter types!
 
 	end
+end
+
+-- load art assets for the title screen
+function init_title()
+	titleart = love.graphics.newImage("art/title/dungeon_caddy_title.png")
+end
+
+-- draw title
+function draw_title()
+	love.graphics.setBackgroundColor(0,0,0,255)
+	love.graphics.clear()
+
+	love.graphics.setColor(255,255,255,255)
+	love.graphics.draw(titleart, 12, 75)
+
+	love.graphics.print("(press any key)", 450, 700)
 end
