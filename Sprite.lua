@@ -89,7 +89,7 @@ function new()
 	o.anim_timer = 0 -- current time since frame change, in seconds
 	o.anim_state = nil -- name of current state in anims that we're on
 	o.anim_frame = 1 -- which frame of the current state we're on
-	o.anim_delay = 0.1 -- time between frames, in seconds
+	o.anim_delay = 0.05 -- time between frames, in seconds
 
 	-- methods
 	o.add_anim = add_anim

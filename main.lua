@@ -14,6 +14,9 @@ TSIZE = 40
 HOMX = 10
 HOMY = 120
 
+-- dungeon scroll speed in pixels per second
+WALKSPEED = 500
+
 -- includes
 require "Board"
 require "Loot"
@@ -101,7 +104,7 @@ elseif gamemode == "dungeon" then
 	if gamestate == "moving" then
 		hero.sprite:animate(dt)
 		local distance_to_next = monst.xpos
-		if distance_to_next <= 200*dt then
+		if distance_to_next <= WALKSPEED*dt then
 			-- we've arrived at the next encounter!
 			dungeon:advance_backdrop(distance_to_next)
 			
@@ -120,7 +123,7 @@ elseif gamemode == "dungeon" then
 			end
 		else
 			-- we're still not there, keep walking
-			dungeon:advance_backdrop(200*dt)
+			dungeon:advance_backdrop(WALKSPEED*dt)
 		end
 		hero.sprite:animate(dt)
 
