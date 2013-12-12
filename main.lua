@@ -23,12 +23,14 @@ require "Loot"
 require "Hero"
 require "Dungeon"
 require "Monster"
+require "Soundbank"
 
 -- global structures
 b = nil 	-- the board
 curr_p = nil -- our current piece in play
 hero = nil -- our brave, doomed hero
 dungeon = nil -- our dungeon
+soundbank = nil -- our collection of sound effects
 
 score = 0 -- silly placeholder matching metric
 
@@ -47,6 +49,8 @@ function love.load()
 	b = Board.new(12,8)
 
 	hero = Hero.new()
+
+	soundbank = Soundbank.new()
 
 	Monster.init_monster_sprites()
 	dungeon = Dungeon.new()	
@@ -107,16 +111,17 @@ elseif gamemode == "dungeon" then
 		if distance_to_next <= WALKSPEED*dt then
 			-- we've arrived at the next encounter!
 			dungeon:advance_backdrop(distance_to_next)
-			
 			-- and now switch modes based on what kind of thing we're Encountering
 			if monst.kind == "monster" then
 				hero.sprite:switch_anim("attack")
 				gamestate = "fighting"
 				fightstate = "hero attack anim"
+				soundbank:play("tom")
 			elseif monst.kind == "sign" then
 				-- switch to Readin' A Sign mode
 				hero.sprite:switch_anim("stand")
 				gamestate = "reading"
+				soundbank:play("rattle")	
 			else
 				-- don't know what to make of this!
 				print("Mysterious encounter kind: " .. monst.kind)
@@ -150,6 +155,7 @@ elseif gamemode == "dungeon" then
 				-- monster survived hero's attack, now he gets a whack
 				fightstate = "monster attack anim"
 				monst.encounter.sprite:switch_anim("attack")
+				soundbank:play("kick")
 			else
 				-- fight's over, hero won, let's nix the monster and get a piece of loot
 				-- TODO ^^^
@@ -177,12 +183,13 @@ elseif gamemode == "dungeon" then
 				-- hero survived and gets another whack at monnster
 				fightstate = "hero attack anim"
 				hero.sprite:switch_anim("attack")
+				soundbank:play("tom")
 			else
 				-- hero is dead, end of dungeon crawl, bummer!
 				print("Hero died, back to town we should go!")
 				gamestate = "dead"
 				hero.sprite:switch_anim("dead")
-				-- TODO ^^^
+				-- TODO: handle whole end-of-crawl situation
 			end
 	
 		else
@@ -281,7 +288,7 @@ function love.keypressed(key)
 			elseif key == "e" then
 				hero:put_gear_on_hero(curr_p)
 				curr_p = nil
-			
+				soundbank:play("doop")
 			end
 
 		else
@@ -386,6 +393,7 @@ end
 
 -- rotate the current piece
 function rotate_curr_piece()
+	soundbank:play("shake")
 	curr_p:rotate_clockwise()
 	force_curr_piece_inbounds()
 end
@@ -405,13 +413,16 @@ function drop_curr_piece()
 		if not rank then
 			-- dismiss the piece
 			curr_p = nil
+			soundbank:play("kick")
 		else
 			-- got a match, generate a new piece of the same kind and of (potentially) greater rank
 			print("Average rank + 1 for matched set of " .. curr_p.subkind .. " is " .. rank)
 			get_new_curr_piece(rank, curr_p.subkind)
+			soundbank:play("bell")
 		end 
 	else
 		-- can't drop here, maybe play a nice error noise!
+		soundbank:play("rattle")
 	end	
 end
 
